@@ -1,1 +1,1 @@
-[![Window Smoke](https://img.youtube.com/vi/yJB0WGlJ0vQ/maxresdefault.jpg)](https://youtu.be/yJB0WGlJ0vQ)
+[![Window Smoke](https://youtu.be/yJB0WGlJ0vQ)]
