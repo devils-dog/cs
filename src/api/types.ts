@@ -15,7 +15,10 @@ export interface LineupResponse {
   target: string;
   title: string;
   description?: string;
-  telegram_message_id: number;
+  telegram_message_id?: number;
+  telegram_file_id?: string;
+  telegram_mime_type?: string;
+  telegram_file_size?: number;
   thumbnail_url?: string;
   telegram_url?: string;
 }
