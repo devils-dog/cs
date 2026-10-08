@@ -40,3 +40,79 @@ body {
     padding: 12px;
   }
 }
+
+.map-selector {
+  width: 100%;
+}
+
+.map-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.map-card {
+  min-height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 12px;
+  box-sizing: border-box;
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  background: var(--background-color);
+  color: var(--text-color);
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.12s ease, background-color 0.12s ease;
+}
+
+.map-card:active {
+  transform: scale(0.98);
+}
+
+.map-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 42px;
+  margin-bottom: 16px;
+  padding: 8px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--background-color);
+  color: var(--text-color);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.back-button:active {
+  transform: scale(0.98);
+}
+
+.map-back-button {
+  margin-bottom: 20px;
+}
+
+@media (max-width: 480px) {
+  .map-grid {
+    gap: 10px;
+  }
+
+  .map-card {
+    min-height: 100px;
+    padding: 16px 8px;
+  }
+
+  .map-name {
+    font-size: 1.1rem;
+  }
+}
