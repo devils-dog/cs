@@ -1,35 +1,34 @@
-import React from 'react'
+import React, { useState } from 'react'
 
 interface VideoPlayerProps {
-  telegramMessageId: number
-  telegramUrl?: string
-  onVideoUnavailable?: () => void
+  lineupId: string
 }
 
-const VideoPlayer: React.FC<VideoPlayerProps> = ({ telegramMessageId, telegramUrl, onVideoUnavailable }) => {
-  const openTelegramPost = () => {
-    if (!telegramUrl) {
-      onVideoUnavailable?.()
-      return
-    }
-    window.open(telegramUrl, '_blank', 'noopener,noreferrer')
+const VideoPlayer: React.FC<VideoPlayerProps> = ({ lineupId }) => {
+  const [hasError, setHasError] = useState(false)
+
+  if (hasError) {
+    return (
+      <div className="video-player">
+        <div className="video-container">
+          <div className="video-placeholder"><p>Video is unavailable.</p></div>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="video-player">
       <div className="video-container">
-        <div className="video-placeholder">
-          <p>{telegramUrl ? `Video from Telegram channel message #${telegramMessageId}` : 'Telegram video is unavailable.'}</p>
-          {telegramUrl && (
-            <button
-              className="open-telegram-button"
-              onClick={openTelegramPost}
-              aria-label={`Open Telegram post #${telegramMessageId} in Telegram`}
-            >
-              Open in Telegram
-            </button>
-          )}
-        </div>
+        <video
+          controls
+          playsInline
+          preload="metadata"
+          width="100%"
+          src={`/api/telegram/lineups/${encodeURIComponent(lineupId)}/video`}
+          onError={() => setHasError(true)}
+          aria-label={`Lineup video for ${lineupId}`}
+        />
       </div>
     </div>
   )
