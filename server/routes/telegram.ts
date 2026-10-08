@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { pool } from '../database'
-import { getConfiguredChannelId, getTelegramFile, getWebhookSecret, streamTelegramFile, TelegramUpdate } from '../services/telegram'
+import { getConfiguredChannelId, getTelegramFile, getWebhookSecret, sendStartMessage, streamTelegramFile, TelegramUpdate } from '../services/telegram'
 
 const router = Router()
 const errorResponse = (code: string, message: string) => ({ error: { code, message } })
@@ -16,7 +16,19 @@ router.post('/webhook', async (req, res) => {
     return res.status(401).json(errorResponse('UNAUTHORIZED', 'Invalid Telegram webhook secret'))
   }
 
-  const post = (req.body as TelegramUpdate)?.channel_post
+  const update = req.body as TelegramUpdate
+
+  if (update.message?.chat.type === 'private' && update.message.text?.trim() === '/start') {
+    try {
+      await sendStartMessage(update.message.chat.id)
+      return res.status(200).json({ ok: true })
+    } catch (error) {
+      console.error('Error sending Telegram start message:', error)
+      return res.status(500).json(errorResponse('TELEGRAM_ERROR', 'Failed to send Telegram start message'))
+    }
+  }
+
+  const post = update.channel_post
   if (!post || !post.video?.file_id) return res.status(200).json({ ok: true, ignored: true })
 
   const channelId = getConfiguredChannelId()
