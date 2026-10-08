@@ -3,26 +3,22 @@ import { validateLineupId } from '../middleware/zodValidation'
 import { pool } from '../database'
 
 const router = Router()
-
-const createErrorResponse = (code: string, message: string) => ({
-  error: { code, message }
-})
+const createErrorResponse = (code: string, message: string) => ({ error: { code, message } })
 
 router.get('/:id', validateLineupId, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT id, map_id, side, grenade_type, target, title, description,
-      telegram_message_id, thumbnail_url, created_at, updated_at
+      telegram_message_id, telegram_file_id, telegram_mime_type, telegram_file_size,
+      thumbnail_url, created_at, updated_at
       FROM lineups WHERE id = $1
     `, [req.params.id])
 
-    if (result.rows.length === 0) {
-      return res.status(404).json(createErrorResponse('NOT_FOUND', 'Lineup not found'))
-    }
+    if (!result.rows.length) return res.status(404).json(createErrorResponse('NOT_FOUND', 'Lineup not found'))
 
     const lineup = result.rows[0]
     const username = process.env.TELEGRAM_CHANNEL_USERNAME?.trim().replace(/^@/, '')
-    const telegramEnabled = Boolean(username && !/^your_channel_username$/i.test(username))
+    const telegramEnabled = Boolean(username && lineup.telegram_message_id && !/^your_channel_username$/i.test(username))
 
     res.json({
       ...lineup,
