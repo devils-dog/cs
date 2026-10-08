@@ -26,3 +26,5 @@ export const connect = async () => {
 export const close = async () => {
   await pool.end();
 };
+
+export { pool };

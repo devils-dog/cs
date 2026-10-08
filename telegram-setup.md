@@ -3,7 +3,6 @@
 ## Созданный Bot
 - Название: c2_grnd_bot_bot
 - Username: t.me/c2_grnd_bot_bot
-- Токен: 8843411917:AAHmlXxbsXueXbmaj-ci9B5r5WchUwlqWY0
 
 ## Настройка WebApp
 
@@ -33,7 +32,7 @@
 // src/telegram/bot.ts
 import { Telegram } from 'telegraf';
 
-const botToken = process.env.TELEGRAM_BOT_TOKEN || '8843411917:AAHmlXxbsXueXbmaj-ci9B5r5WchUwlqWY0';
+const botToken = process.env.TELEGRAM_BOT_TOKEN || 'YOUR_NEW_BOT_TOKEN_HERE';
 const telegram = new Telegram(botToken);
 
 export { telegram };
@@ -66,7 +65,7 @@ export interface TelegramUser {
 
 В файле `.env` добавьте:
 ```
-TELEGRAM_BOT_TOKEN=8843411917:AAHmlXxbsXueXbmaj-ci9B5r5WchUwlqWY0
+TELEGRAM_BOT_TOKEN=YOUR_NEW_BOT_TOKEN_HERE
 TELEGRAM_WEBAPP_URL=https://t.me/c2_grnd_bot_bot
 ```
 

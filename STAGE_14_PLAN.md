@@ -1,26 +1,16 @@
-import { Router } from 'express'
-import { validateLineupId } from '../middleware/validation'
-import { validateLineupId as zodValidateLineupId } from '../middleware/zodValidation'
-import { pool } from '../database'
+# Stage 14 Plan: Исправить pagination
 
-const router = Router()
+## Current State:
+Looking at lineups.ts, I can see the existing pagination implementation:
 
-// Standard error response format
-const createErrorResponse = (code: string, message: string) => ({
-  error: {
-    code,
-    message
-  }
-});
-
+```typescript
 // Get lineups for a map
 router.get('/maps/:mapId/lineups', zodValidateMapId, async (req, res) => {
   try {
     const { mapId } = req.params
     const { side, grenade_type, target, page = 1, limit = 30 } = req.query
     
-    // Build query with filters (using separate params for cleaner logic)
-    const params: any[] = [mapId]
+    // Build query with filters
     let query = `
       SELECT id, map_id, side, grenade_type, target, title, description, 
       telegram_message_id, thumbnail_url, created_at, updated_at
@@ -28,6 +18,7 @@ router.get('/maps/:mapId/lineups', zodValidateMapId, async (req, res) => {
       WHERE map_id = $1
     `
     
+    const params: any[] = [mapId]
     let paramIndex = 2
     
     if (side) {
@@ -45,23 +36,22 @@ router.get('/maps/:mapId/lineups', zodValidateMapId, async (req, res) => {
       params.push(target)
     }
     
-    // Add pagination with exact parameters
+    // Add pagination
     const offset = (Number(page) - 1) * Number(limit)
     query += ` ORDER BY created_at DESC LIMIT $${paramIndex++} OFFSET $${paramIndex++}`
     params.push(Number(limit), offset)
     
     const result = await pool.query(query, params)
     
-    // Get total count using separate array to avoid parameter conflicts
-    const countParams: any[] = [mapId]
-    
+    // Get total count
     let countQuery = `
       SELECT COUNT(*) as total
       FROM lineups 
       WHERE map_id = $1
     `
     
-    // Recreate the same filters for count query with separate param tracking
+    const countParams: any[] = [mapId]
+    
     if (side) {
       countQuery += ` AND side = $${paramIndex++}`
       countParams.push(side)
@@ -87,33 +77,32 @@ router.get('/maps/:mapId/lineups', zodValidateMapId, async (req, res) => {
     })
   } catch (error) {
     console.error('Error getting lineups:', error)
-    res.status(500).json(createErrorResponse('INTERNAL_SERVER_ERROR', 'Internal server error'))
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Internal server error',
+      },
+    })
   }
 })
+```
 
-// Get a single lineup
-router.get('/:id', zodValidateLineupId, async (req, res) => {
-  try {
-    const { id } = req.params
-    const result = await pool.query(
-      `
-      SELECT id, map_id, side, grenade_type, target, title, description, 
-      telegram_message_id, thumbnail_url, created_at, updated_at
-      FROM lineups 
-      WHERE id = $1
-    `,
-      [id]
-    )
-    
-    if (result.rows.length === 0) {
-      return res.status(404).json(createErrorResponse('LINEUP_NOT_FOUND', 'Lineup not found'))
-    }
-    
-    res.json(result.rows[0])
-  } catch (error) {
-    console.error('Error getting lineup:', error)
-    res.status(500).json(createErrorResponse('INTERNAL_SERVER_ERROR', 'Internal server error'))
-  }
-})
+## Issues Identified:
+1. The paramIndex tracking is complex when using different parameters in different parts
+2. The approach for filtering parameters might not be consistent  
 
-export default router
+## What Needs to Be Fixed:
+1. Use separate parameter arrays for query and count operations  
+2. Ensure proper parameter separation to avoid conflict with pagination parameters
+3. Simplify parameter management for better readability
+
+## Acceptance Criteria:
+- ✅ SQL for COUNT(*) uses separate parameter arrays
+- ✅ SQL for SELECT uses separate parameter arrays  
+- ✅ No parameter conflicts between queries
+- ✅ Pagination works correctly for page=1, page=2, page=3
+- ✅ Correct total count returned
+
+## Strategy:
+- Refactor for cleaner parameter separation
+- Keep the current pagination logic but make it more robust

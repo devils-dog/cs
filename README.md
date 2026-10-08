@@ -8,6 +8,15 @@ This is a Telegram Mini App that serves as a visual catalog for CS2 grenade line
 - View lineup details with descriptions
 - Watch associated videos (via Telegram)
 
+## Recent Updates
+- ✅ Security cleanup completed (removed compromised Telegram Bot Token)
+- ✅ Git cleanup completed (fixed .gitignore, removed sensitive data)
+- ✅ Project foundation updated (package.json, TypeScript configs, Vite config)
+- ✅ Database layer fixed (implemented consistent database approach)
+- ✅ API implementation improved (validation, pagination, error handling)
+- ✅ Frontend API client verified (existing implementation)
+- ✅ All core functionality properly structured
+
 ## Development Setup
 
 ### Prerequisites
