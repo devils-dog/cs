@@ -13,15 +13,15 @@ async function startServer() {
     }
     console.log('Database initialized successfully');
 
-    try {
-      await setWebhook();
-    } catch (error) {
-      console.error('Failed to configure Telegram webhook:', error);
-    }
-
-    const server = app.listen(PORT, () => {
+    const server = app.listen(PORT, async () => {
       console.log(`Server is running on port ${PORT}`);
       console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+
+      try {
+        await setWebhook();
+      } catch (error) {
+        console.error('Failed to configure Telegram webhook:', error);
+      }
     });
 
     const shutdown = async (signal: string) => {
