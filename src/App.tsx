@@ -69,6 +69,16 @@ function App() {
   const handleBackToLineups = () => {
     setSelectedLineup(null)
   }
+
+  // Handle back to map selection
+  const handleBackToMaps = () => {
+    setSelectedMap(null)
+    setSelectedSide(null)
+    setSelectedGrenadeType(null)
+    setSelectedTarget(null)
+    setSelectedLineup(null)
+    setLineups([])
+  }
   
   // Fetch lineups when filters change
   React.useEffect(() => {
@@ -145,6 +155,9 @@ function App() {
               />
             ) : (
               <>
+                <button className="back-button map-back-button" onClick={handleBackToMaps}>
+                  ← Back to maps
+                </button>
                 <div className="filter-section">
                   <SideSelector 
                     selectedSide={selectedSide} 
