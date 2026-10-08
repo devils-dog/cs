@@ -16,7 +16,9 @@ router.get('/', async (_req, res) => {
     const result = await pool.query(`
       SELECT id, slug, name, thumbnail_url, sort_order,
       (SELECT COUNT(*) FROM lineups WHERE map_id = maps.id) as lineup_count
-      FROM maps ORDER BY sort_order
+      FROM maps
+      WHERE id IN ('de_mirage', 'de_dust2', 'de_inferno', 'de_nuke', 'de_ancient', 'de_anubis', 'de_cache')
+      ORDER BY sort_order
     `)
     res.json(result.rows)
   } catch (error) {
