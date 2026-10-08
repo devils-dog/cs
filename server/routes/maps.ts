@@ -28,6 +28,32 @@ router.get('/', async (_req, res) => {
   }
 })
 
+router.get('/:id/targets', validateMapId, validateQuery, async (req, res) => {
+  try {
+    const { id: mapId } = req.params
+    const { side, grenade_type } = req.query
+    const params: string[] = [mapId]
+    let paramIndex = 2
+    let query = 'SELECT DISTINCT target FROM lineups WHERE map_id = $1'
+
+    if (side) {
+      query += ` AND side = ${paramIndex++}`
+      params.push(String(side))
+    }
+    if (grenade_type) {
+      query += ` AND grenade_type = ${paramIndex++}`
+      params.push(String(grenade_type))
+    }
+
+    query += ' ORDER BY target'
+    const result = await pool.query(query, params)
+    res.json(result.rows.map(row => row.target))
+  } catch (error) {
+    console.error('Error getting lineup targets:', error)
+    res.status(500).json(createErrorResponse('DATABASE_ERROR', 'Database error occurred'))
+  }
+})
+
 router.get('/:id', validateMapId, async (req, res) => {
   try {
     const result = await pool.query(`
