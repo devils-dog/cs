@@ -4,12 +4,12 @@ import { ApiError } from './errorHandler';
 
 // Schema for map ID validation
 export const mapIdSchema = z.object({
-  id: z.string().regex(/^[a-z0-9-]+$/, "Map ID must be a valid string")
+  id: z.string().regex(/^[a-z0-9_-]+$/, "Map ID must be a valid string")
 });
 
 // Schema for lineup ID validation  
 export const lineupIdSchema = z.object({
-  id: z.string().regex(/^[a-z0-9-]+$/, "Lineup ID must be a valid string")
+  id: z.string().regex(/^[a-z0-9_-]+$/, "Lineup ID must be a valid string")
 });
 
 // Schema for query parameters
@@ -28,7 +28,6 @@ export const validateMapId = (req: Request, res: Response, next: NextFunction) =
     next();
   } catch (error) {
     if (error instanceof z.ZodError) {
-      // Handle Zod validation errors with the new standard
       return res.status(400).json({
         error: {
           code: 'INVALID_MAP_ID',
@@ -40,7 +39,6 @@ export const validateMapId = (req: Request, res: Response, next: NextFunction) =
         }
       });
     }
-    // Catch any unexpected errors
     return res.status(500).json({
       error: {
         code: 'INTERNAL_ERROR',
@@ -57,7 +55,6 @@ export const validateLineupId = (req: Request, res: Response, next: NextFunction
     next();
   } catch (error) {
     if (error instanceof z.ZodError) {
-      // Handle Zod validation errors with the new standard
       return res.status(400).json({
         error: {
           code: 'INVALID_LINEUP_ID',
@@ -69,7 +66,6 @@ export const validateLineupId = (req: Request, res: Response, next: NextFunction
         }
       });
     }
-    // Catch any unexpected errors
     return res.status(500).json({
       error: {
         code: 'INTERNAL_ERROR',
@@ -86,7 +82,6 @@ export const validateQuery = (req: Request, res: Response, next: NextFunction) =
     next();
   } catch (error) {
     if (error instanceof z.ZodError) {
-      // Handle Zod validation errors with the new standard
       return res.status(400).json({
         error: {
           code: 'INVALID_REQUEST',
@@ -98,7 +93,6 @@ export const validateQuery = (req: Request, res: Response, next: NextFunction) =
         }
       });
     }
-    // Catch any unexpected errors
     return res.status(500).json({
       error: {
         code: 'INTERNAL_ERROR',
