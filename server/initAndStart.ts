@@ -1,13 +1,23 @@
 import { initializeDatabase } from './db/init';
 import app from './app';
 import { close } from './database';
+import { setWebhook } from './services/telegram';
 
 const PORT = process.env.PORT || 3000;
 
 async function startServer() {
   try {
-    await initializeDatabase();
+    const database = await initializeDatabase();
+    if (!database.success) {
+      throw database.error || new Error('Database initialization failed');
+    }
     console.log('Database initialized successfully');
+
+    try {
+      await setWebhook();
+    } catch (error) {
+      console.error('Failed to configure Telegram webhook:', error);
+    }
 
     const server = app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
@@ -31,7 +41,4 @@ async function startServer() {
 }
 
 export { startServer };
-
-if (require.main === module) {
-  startServer();
-}
+if (require.main === module) startServer();
