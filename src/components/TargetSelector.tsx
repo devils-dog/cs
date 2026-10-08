@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { apiClient } from '../api/clientSingleton'
 
 interface TargetSelectorProps {
@@ -14,32 +14,23 @@ const TargetSelector: React.FC<TargetSelectorProps> = ({ selectedTarget, onTarge
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Fetch unique targets for the current map and filters
   useEffect(() => {
-    if (!mapId) return
-    
+    if (!mapId) {
+      setTargets([])
+      return
+    }
+
     const fetchTargets = async () => {
       setLoading(true)
       setError(null)
-      
+
       try {
-        // Build query parameters based on current selections
-        const filters: {
-          side?: 'T' | 'CT'
-          grenade_type?: 'smoke' | 'flash' | 'molotov' | 'he'
-        } = {}
+        const filters: { side?: 'T' | 'CT'; grenade_type?: 'smoke' | 'flash' | 'molotov' | 'he' } = {}
         if (side) filters.side = side
         if (grenadeType) filters.grenade_type = grenadeType
-        
-        // Instead of fetching all lineups to extract unique targets,
-        // we'll use a dedicated endpoint or query that returns only unique targets
-        // For this implementation, we'll fetch existing lineups but only load a limited set
-        // to minimize impact for now, since we don't have a dedicated targets endpoint
-        const result = await apiClient.getMapLineups(mapId, { ...filters, page: 1, limit: 1000 })
-        
-        // Extract unique targets and sort them
-        const uniqueTargets = Array.from(new Set(result.items.map((item: any) => item.target))).sort()
-        setTargets(uniqueTargets)
+
+        const result = await apiClient.getMapTargets(mapId, filters)
+        setTargets(result)
       } catch (err) {
         console.error('Error fetching targets:', err)
         setError('Failed to load targets')
@@ -48,50 +39,22 @@ const TargetSelector: React.FC<TargetSelectorProps> = ({ selectedTarget, onTarge
         setLoading(false)
       }
     }
-    
-    fetchTargets()
+
+    void fetchTargets()
   }, [mapId, side, grenadeType])
 
-  // Handle target selection
-  const handleSelect = (target: string) => {
-    onTargetSelect(target)
-  }
-
-  if (loading) {
-    return (
-      <div className="target-selector">
-        <h3>Target</h3>
-        <p>Loading targets...</p>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="target-selector">
-        <h3>Target</h3>
-        <p className="error">Error: {error}</p>
-      </div>
-    )
-  }
+  if (loading) return <div className="target-selector"><h3>Target</h3><p>Loading targets...</p></div>
+  if (error) return <div className="target-selector"><h3>Target</h3><p className="error">Error: {error}</p></div>
 
   return (
     <div className="target-selector">
       <h3>Target</h3>
       <div className="target-buttons">
-        {targets.length > 0 ? (
-          targets.map(target => (
-            <button
-              key={target}
-              className={`target-button ${selectedTarget === target ? 'selected' : ''}`}
-              onClick={() => handleSelect(target)}
-            >
-              {target}
-            </button>
-          ))
-        ) : (
-          <p>No targets available</p>
-        )}
+        {targets.length > 0 ? targets.map(target => (
+          <button key={target} className={`target-button ${selectedTarget === target ? 'selected' : ''}`} onClick={() => onTargetSelect(target)}>
+            {target}
+          </button>
+        )) : <p>No targets available</p>}
       </div>
     </div>
   )

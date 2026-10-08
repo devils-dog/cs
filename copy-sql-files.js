@@ -1,24 +1,22 @@
 const fs = require('fs');
 const path = require('path');
 
-// Create dist/db directory if it doesn't exist
+const copyDirectory = (source, destination) => {
+  if (!fs.existsSync(source)) {
+    throw new Error(`Required SQL directory does not exist: ${source}`);
+  }
+
+  fs.cpSync(source, destination, { recursive: true });
+};
+
 const distDbPath = path.join('dist', 'db');
-if (!fs.existsSync(distDbPath)) {
-  fs.mkdirSync(distDbPath, { recursive: true });
-}
-
-// Copy migration files
 const migrationsSrc = path.join('server', 'db', 'migrations');
-const migrationsDst = path.join('dist', 'db', 'migrations');
-if (fs.existsSync(migrationsSrc)) {
-  fs.cpSync(migrationsSrc, migrationsDst, { recursive: true });
-}
+const migrationsDst = path.join(distDbPath, 'migrations');
+const seedsSrc = path.join('server', 'db', 'seeds');
+const seedsDst = path.join(distDbPath, 'seeds');
 
-// Copy seed files  
-const seedsSrc = path.join('server', 'db', 'seed');
-const seedsDst = path.join('dist', 'db', 'seed');
-if (fs.existsSync(seedsSrc)) {
-  fs.cpSync(seedsSrc, seedsDst, { recursive: true });
-}
+fs.mkdirSync(distDbPath, { recursive: true });
+copyDirectory(migrationsSrc, migrationsDst);
+copyDirectory(seedsSrc, seedsDst);
 
-console.log("SQL files copied to dist directory");
+console.log('SQL migrations and seeds copied to dist/db');
