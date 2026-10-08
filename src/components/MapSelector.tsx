@@ -55,7 +55,6 @@ const MapSelector: React.FC<MapSelectorProps> = ({ onSelectMap, selectedMapId })
 
   return (
     <div className="map-selector">
-      <h2>Select a Map</h2>
       <div className="map-grid">
         {maps.map((map) => (
           <div
@@ -64,7 +63,6 @@ const MapSelector: React.FC<MapSelectorProps> = ({ onSelectMap, selectedMapId })
             onClick={() => handleMapClick(map)}
           >
             <div className="map-name">{map.name}</div>
-            <div className="map-lineup-count">Lineups: {map.lineup_count}</div>
           </div>
         ))}
       </div>
