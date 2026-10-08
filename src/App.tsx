@@ -144,10 +144,6 @@ function App() {
           />
         ) : (
           <>
-            <div className="app-header">
-              <h1>CS2 Nades</h1>
-            </div>
-            
             {!selectedMap ? (
               <MapSelector 
                 onSelectMap={handleMapSelect} 
