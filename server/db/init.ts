@@ -52,11 +52,13 @@ const initializeDatabase = async () => {
     console.log('Starting database initialization...');
     const migrationPath = path.join(__dirname, '..', 'db', 'migrations', '001_initial.sql');
     const telegramVideoMigrationPath = path.join(__dirname, '..', 'db', 'migrations', '002_telegram_video.sql');
+    const mapSelectionMigrationPath = path.join(__dirname, '..', 'db', 'migrations', '003_map_selection.sql');
     const seedMapsPath = path.join(__dirname, '..', 'db', 'seeds', '001_maps.sql');
     const seedLineupsPath = path.join(__dirname, '..', 'db', 'seeds', '002_lineups.sql');
 
     await executeMigrationWithTransaction(migrationPath, '001_initial');
     await executeMigrationWithTransaction(telegramVideoMigrationPath, '002_telegram_video');
+    await executeMigrationWithTransaction(mapSelectionMigrationPath, '003_map_selection');
     await executeSQLFile(seedMapsPath);
     await executeSQLFile(seedLineupsPath);
 
