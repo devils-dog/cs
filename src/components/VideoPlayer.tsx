@@ -1,5 +1,4 @@
 import React from 'react'
-import { getTelegramWebApp } from '../telegram/sdk'
 
 interface VideoPlayerProps {
   telegramMessageId: number
@@ -9,21 +8,14 @@ interface VideoPlayerProps {
 
 const VideoPlayer: React.FC<VideoPlayerProps> = ({ telegramMessageId, telegramUrl, onVideoUnavailable }) => {
   const openTelegramPost = () => {
-    const webApp = getTelegramWebApp()
-    if (webApp && webApp.initDataUnsafe && webApp.initDataUnsafe.user) {
-      // If we have a pre-formatted URL from the API, use it
-      if (telegramUrl) {
-        window.open(telegramUrl, '_blank')
-      } else {
-        // Fallback for development mode - construct URL from message ID
-        const fallbackUrl = `https://t.me/${process.env.TELEGRAM_CHANNEL_USERNAME}/${telegramMessageId}`
-        window.open(fallbackUrl, '_blank')
-      }
+    // Use the telegram_url from the API if available
+    if (telegramUrl) {
+      window.open(telegramUrl, '_blank')
     } else {
-      // Fallback for development mode - show a fallback link or handle gracefully
-      console.warn('Not in Telegram environment, showing fallback for video access')
-      const fallbackUrl = `https://t.me/${process.env.TELEGRAM_CHANNEL_USERNAME}/${telegramMessageId}`
-      window.open(fallbackUrl, '_blank')
+      // Fallback to the Telegram channel URL if no specific URL is provided
+      console.warn('No telegram_url provided from API, using fallback')
+      // This should not happen in production - the API should provide the full URL
+      window.open(`https://t.me/placeholder_channel/${telegramMessageId}`, '_blank')
     }
   }
 

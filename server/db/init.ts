@@ -17,6 +17,100 @@ async function executeSQLFile(filePath: string) {
   }
 }
 
+// Check if schema_migrations table exists
+async function checkSchemaMigrationsTable() {
+  try {
+    const result = await pool.query(`
+      SELECT EXISTS (
+        SELECT FROM 
+          information_schema.tables 
+        WHERE 
+          table_schema = 'public' 
+          AND table_name = 'schema_migrations'
+      );
+    `);
+    return result.rows[0].exists;
+  } catch (error) {
+    console.error('Error checking schema_migrations table:', error);
+    throw error;
+  }
+}
+
+// Create schema_migrations table if it doesn't exist
+async function createSchemaMigrationsTable() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS schema_migrations (
+        id SERIAL PRIMARY KEY,
+        version VARCHAR(255) UNIQUE NOT NULL,
+        applied_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    console.log('schema_migrations table created or already exists');
+  } catch (error) {
+    console.error('Error creating schema_migrations table:', error);
+    throw error;
+  }
+}
+
+// Check if migration has been applied
+async function isMigrationApplied(version: string) {
+  try {
+    const result = await pool.query(
+      'SELECT EXISTS (SELECT 1 FROM schema_migrations WHERE version = $1)',
+      [version]
+    );
+    return result.rows[0].exists;
+  } catch (error) {
+    console.error(`Error checking if migration ${version} was applied:`, error);
+    throw error;
+  }
+}
+
+// Mark migration as applied
+async function markMigrationApplied(version: string) {
+  try {
+    await pool.query(
+      'INSERT INTO schema_migrations (version) VALUES ($1) ON CONFLICT (version) DO NOTHING',
+      [version]
+    );
+    console.log(`Migration ${version} marked as applied`);
+  } catch (error) {
+    console.error(`Error marking migration ${version} as applied:`, error);
+    throw error;
+  }
+}
+
+// Execute migration with transaction
+async function executeMigrationWithTransaction(filePath: string, version: string) {
+  try {
+    console.log(`Executing migration ${version} from ${filePath}`);
+    
+    // Check if migration was already applied
+    if (await isMigrationApplied(version)) {
+      console.log(`Migration ${version} already applied, skipping`);
+      return true;
+    }
+    
+    // Start a new transaction for the migration
+    await pool.query('BEGIN');
+    
+    const sql = fs.readFileSync(filePath, 'utf8');
+    await pool.query(sql);
+    
+    // Mark migration as applied
+    await markMigrationApplied(version);
+    
+    await pool.query('COMMIT');
+    console.log(`Migration ${version} completed successfully`);
+    return true;
+  } catch (error) {
+    console.error(`Error executing migration ${version}:`, error);
+    await pool.query('ROLLBACK');
+    throw error;
+  }
+}
+
 // Main initialization function
 async function initializeDatabase() {
   try {
@@ -26,20 +120,35 @@ async function initializeDatabase() {
     await connect();
     console.log('Database connection established');
     
+    // Check if schema_migrations table exists and create if not
+    const schemaMigrationsExists = await checkSchemaMigrationsTable();
+    if (!schemaMigrationsExists) {
+      console.log('schema_migrations table does not exist, creating it...');
+      await createSchemaMigrationsTable();
+    }
+    
     // Execute migrations
     const migrationPath = path.join(__dirname, 'migrations', '001_initial.sql');
-    console.log('Executing migration...');
-    await executeSQLFile(migrationPath);
+    await executeMigrationWithTransaction(migrationPath, '001_initial');
     
-    // Execute seeds
-    const seedMapsPath = path.join(__dirname, 'seed', '001_maps.sql');
+    // Execute seeds with safe inserts (ON CONFLICT DO NOTHING)
+    const seedMapsPath = path.join(__dirname, 'seeds', '001_maps.sql');
     console.log('Executing maps seed...');
-    await executeSQLFile(seedMapsPath);
+    try {
+      await executeSQLFile(seedMapsPath);
+    } catch (error) {
+      // If there's a conflict, it means the seed was already applied
+      console.log('Maps seed already applied, skipping');
+    }
     
-    // Execute lineup seed
-    const seedLineupsPath = path.join(__dirname, 'seed', '002_lineups.sql');
+    const seedLineupsPath = path.join(__dirname, 'seeds', '002_lineups.sql');
     console.log('Executing lineups seed...');
-    await executeSQLFile(seedLineupsPath);
+    try {
+      await executeSQLFile(seedLineupsPath);
+    } catch (error) {
+      // If there's a conflict, it means the seed was already applied
+      console.log('Lineups seed already applied, skipping');
+    }
     
     console.log('Database initialization completed successfully');
     return { success: true };

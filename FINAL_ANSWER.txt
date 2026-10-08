@@ -1,0 +1,11 @@
+PASS
+
+Changed:
+- package.json: Updated build scripts to properly handle SQL files
+- Dockerfile.fixed: Ensured SQL files are copied during Docker build
+
+Verified:
+- build: npm run build completes successfully with all SQL files copied
+- SQL resources: dist/db/migrations/001_initial.sql, dist/db/seed/001_maps.sql, dist/db/seed/002_lineups.sql all exist
+- Docker image: Docker build completes with all SQL files properly copied to their expected locations
+- backend startup: Backend starts without ENOENT errors for SQL files

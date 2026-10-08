@@ -7,10 +7,11 @@
     "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
     "dev:server": "node -r dotenv/config server/server.ts dotenv:PORT=3000",
     "dev:client": "vite --host",
-    "build": "npm run build:client && npm run build:server",
+    "build": "npm run build:client && npm run build:server && node copy-sql-files.js",
     "build:client": "vite build --mode production",
     "build:server": "tsc -p tsconfig.server.json",
-    "start": "node dist/server/server.js",
+    "copy:sql": "node copy-sql-files.js",
+    "start": "node dist/server.js",
     "test": "vitest"
   },
   "dependencies": {

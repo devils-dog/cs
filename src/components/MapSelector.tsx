@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { MapResponse } from '../api/types'
-import { ApiClient } from '../api/client'
+import { apiClient } from '../api/clientSingleton'
 
 interface MapSelectorProps {
   onSelectMap: (map: MapResponse) => void
@@ -11,7 +11,6 @@ const MapSelector: React.FC<MapSelectorProps> = ({ onSelectMap, selectedMapId })
   const [maps, setMaps] = useState<MapResponse[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const apiClient = new ApiClient('/api')
 
   useEffect(() => {
     const fetchMaps = async () => {

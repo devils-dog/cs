@@ -24,12 +24,16 @@ const TargetSelector: React.FC<TargetSelectorProps> = ({ selectedTarget, onTarge
       
       try {
         // Build query parameters based on current selections
-        const filters: any = {}
+        const filters: {
+          side?: 'T' | 'CT'
+          grenade_type?: 'smoke' | 'flash' | 'molotov' | 'he'
+        } = {}
         if (side) filters.side = side
         if (grenadeType) filters.grenade_type = grenadeType
         
         // Fetch targets by getting lineups and extracting unique targets
-        const result = await apiClient.getMapLineups(mapId, filters)
+        // We'll get all lineups (no pagination) to ensure we get all targets
+        const result = await apiClient.getMapLineups(mapId, { ...filters, page: 1, limit: 1000 })
         
         const uniqueTargets = Array.from(new Set(result.items.map((item: any) => item.target))).sort()
         setTargets(uniqueTargets)

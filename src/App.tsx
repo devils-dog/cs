@@ -80,7 +80,11 @@ function App() {
       setLineupsEmpty(false)
       
       try {
-        const filters: any = {}
+        const filters: {
+          side?: 'T' | 'CT'
+          grenade_type?: 'smoke' | 'flash' | 'molotov' | 'he'
+          target?: string
+        } = {}
         if (selectedSide) filters.side = selectedSide
         if (selectedGrenadeType) filters.grenade_type = selectedGrenadeType
         if (selectedTarget) filters.target = selectedTarget

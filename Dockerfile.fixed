@@ -13,11 +13,6 @@ RUN npm install
 # Копируем весь код
 COPY . .
 
-# Копируем SQL файлы для базы данных
-COPY server/db/migrations/001_initial.sql /app/server/db/migrations/001_initial.sql
-COPY server/db/seed/001_maps.sql /app/server/db/seed/001_maps.sql
-COPY server/db/seed/002_lineups.sql /app/server/db/seed/002_lineups.sql
-
 # Создаем директорию scripts если не существует
 RUN mkdir -p scripts
 
@@ -26,6 +21,11 @@ COPY scripts/healthcheck.js ./scripts/healthcheck.js
 
 # Собираем бэкенд
 RUN npm run build:server
+
+# Копируем SQL файлы в dist после TypeScript сборки
+COPY server/db/migrations/001_initial.sql /app/dist/db/migrations/001_initial.sql
+COPY server/db/seed/001_maps.sql /app/dist/db/seed/001_maps.sql
+COPY server/db/seed/002_lineups.sql /app/dist/db/seed/002_lineups.sql
 
 # Экспонируем порт
 EXPOSE 3000

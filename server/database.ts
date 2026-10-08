@@ -15,8 +15,12 @@ export const query = (text: string, params: any[]) => {
 
 export const connect = async () => {
   try {
-    await pool.connect();
+    // Use a pooled connection instead of connecting directly to avoid hanging connections
+    const client = await pool.connect();
     console.log('Connected to PostgreSQL database successfully');
+    // Release the client back to the pool immediately after connection check
+    client.release();
+    return client;
   } catch (error) {
     console.error('Database connection error:', error);
     console.error('Database connection failed. Check database configuration and connectivity.');
