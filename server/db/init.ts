@@ -6,7 +6,6 @@ import path from 'path';
 async function executeSQLFile(filePath: string) {
   try {
     const sql = fs.readFileSync(filePath, 'utf8');
-    await connect(); // Ensure database connection is established
     // We should execute the SQL content directly to the database
     console.log(`Executing SQL from ${filePath}`);
     await pool.query(sql);
@@ -92,21 +91,28 @@ async function executeMigrationWithTransaction(filePath: string, version: string
       return true;
     }
     
-    // Start a new transaction for the migration
-    await pool.query('BEGIN');
-    
-    const sql = fs.readFileSync(filePath, 'utf8');
-    await pool.query(sql);
-    
-    // Mark migration as applied
-    await markMigrationApplied(version);
-    
-    await pool.query('COMMIT');
-    console.log(`Migration ${version} completed successfully`);
-    return true;
+    // Start a new transaction for the migration using a dedicated client
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      
+      const sql = fs.readFileSync(filePath, 'utf8');
+      await client.query(sql);
+      
+      // Mark migration as applied
+      await markMigrationApplied(version);
+      
+      await client.query('COMMIT');
+      console.log(`Migration ${version} completed successfully`);
+      return true;
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
   } catch (error) {
     console.error(`Error executing migration ${version}:`, error);
-    await pool.query('ROLLBACK');
     throw error;
   }
 }
@@ -127,27 +133,27 @@ async function initializeDatabase() {
       await createSchemaMigrationsTable();
     }
     
-    // Execute migrations
-    const migrationPath = path.join(__dirname, 'migrations', '001_initial.sql');
+    // Execute migrations (properly scoped to dist directory when deployed)
+    const migrationPath = path.join(__dirname, '..', '..', 'dist', 'db', 'migrations', '001_initial.sql');
     await executeMigrationWithTransaction(migrationPath, '001_initial');
     
-    // Execute seeds with safe inserts (ON CONFLICT DO NOTHING)
-    const seedMapsPath = path.join(__dirname, 'seeds', '001_maps.sql');
+    // Execute seeds with idempotent inserts (avoiding conflicts)
+    const seedMapsPath = path.join(__dirname, '..', '..', 'dist', 'db', 'seeds', '001_maps.sql');
     console.log('Executing maps seed...');
     try {
       await executeSQLFile(seedMapsPath);
     } catch (error) {
-      // If there's a conflict, it means the seed was already applied
-      console.log('Maps seed already applied, skipping');
+      console.error('Error executing maps seed:', error);
+      throw error;
     }
     
-    const seedLineupsPath = path.join(__dirname, 'seeds', '002_lineups.sql');
+    const seedLineupsPath = path.join(__dirname, '..', '..', 'dist', 'db', 'seeds', '002_lineups.sql');
     console.log('Executing lineups seed...');
     try {
       await executeSQLFile(seedLineupsPath);
     } catch (error) {
-      // If there's a conflict, it means the seed was already applied
-      console.log('Lineups seed already applied, skipping');
+      console.error('Error executing lineups seed:', error);
+      throw error;
     }
     
     console.log('Database initialization completed successfully');

@@ -24,8 +24,8 @@ RUN npm run build:server
 
 # Копируем SQL файлы в dist после TypeScript сборки
 COPY server/db/migrations/001_initial.sql /app/dist/db/migrations/001_initial.sql
-COPY server/db/seed/001_maps.sql /app/dist/db/seed/001_maps.sql
-COPY server/db/seed/002_lineups.sql /app/dist/db/seed/002_lineups.sql
+COPY server/db/seeds/001_maps.sql /app/dist/db/seeds/001_maps.sql
+COPY server/db/seeds/002_lineups.sql /app/dist/db/seeds/002_lineups.sql
 
 # Экспонируем порт
 EXPOSE 3000

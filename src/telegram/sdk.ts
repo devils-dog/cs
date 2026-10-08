@@ -10,8 +10,12 @@ export const initTelegramWebApp = (): TelegramWebApp => {
       telegramWebApp = window.Telegram.WebApp
       // Only call ready and expand if not already called by Telegram
       // Note: In real app, ready() and expand() are typically called by Telegram itself
-      telegramWebApp.ready()
-      telegramWebApp.expand()
+      try {
+        telegramWebApp.ready()
+        telegramWebApp.expand()
+      } catch (error) {
+        console.warn('Error calling Telegram WebApp methods:', error)
+      }
       initialized = true
     }
     return telegramWebApp
@@ -21,8 +25,8 @@ export const initTelegramWebApp = (): TelegramWebApp => {
   console.warn('Telegram WebApp not available - running in development mode')
   
   // For development, we want to ensure the app starts even if no real Telegram env
-  if (initialized) {
-    return telegramWebApp as TelegramWebApp
+  if (initialized && telegramWebApp) {
+    return telegramWebApp
   }
   
   // Mock implementation for development
