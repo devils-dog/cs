@@ -23,27 +23,20 @@ const createSchemaMigrationsTable = async (client: import('pg').PoolClient) => {
 
 const executeMigrationWithTransaction = async (filePath: string, version: string) => {
   const client = await pool.connect();
-
   try {
     await client.query('BEGIN');
     await createSchemaMigrationsTable(client);
-
     const applied = await client.query(
       'SELECT EXISTS (SELECT 1 FROM schema_migrations WHERE version = $1)',
       [version]
     );
-
     if (applied.rows[0].exists) {
       await client.query('COMMIT');
       console.log(`Migration ${version} already applied, skipping`);
       return;
     }
-
     await client.query(readSQLFile(filePath));
-    await client.query(
-      'INSERT INTO schema_migrations (version) VALUES ($1)',
-      [version]
-    );
+    await client.query('INSERT INTO schema_migrations (version) VALUES ($1)', [version]);
     await client.query('COMMIT');
     console.log(`Migration ${version} completed successfully`);
   } catch (error) {
@@ -57,12 +50,13 @@ const executeMigrationWithTransaction = async (filePath: string, version: string
 const initializeDatabase = async () => {
   try {
     console.log('Starting database initialization...');
-
     const migrationPath = path.join(__dirname, '..', 'db', 'migrations', '001_initial.sql');
+    const telegramVideoMigrationPath = path.join(__dirname, '..', 'db', 'migrations', '002_telegram_video.sql');
     const seedMapsPath = path.join(__dirname, '..', 'db', 'seeds', '001_maps.sql');
     const seedLineupsPath = path.join(__dirname, '..', 'db', 'seeds', '002_lineups.sql');
 
     await executeMigrationWithTransaction(migrationPath, '001_initial');
+    await executeMigrationWithTransaction(telegramVideoMigrationPath, '002_telegram_video');
     await executeSQLFile(seedMapsPath);
     await executeSQLFile(seedLineupsPath);
 
@@ -74,8 +68,5 @@ const initializeDatabase = async () => {
   }
 };
 
-if (require.main === module) {
-  void initializeDatabase();
-}
-
+if (require.main === module) void initializeDatabase();
 export { initializeDatabase };
