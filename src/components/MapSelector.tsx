@@ -17,7 +17,16 @@ const MapSelector: React.FC<MapSelectorProps> = ({ onSelectMap, selectedMapId })
       try {
         setLoading(true)
         const data = await apiClient.getMaps()
-        setMaps(data)
+        const allowedMapIds = new Set([
+          'de_mirage',
+          'de_dust2',
+          'de_inferno',
+          'de_nuke',
+          'de_ancient',
+          'de_anubis',
+          'de_cache'
+        ])
+        setMaps(data.filter(map => allowedMapIds.has(map.id)))
         setLoading(false)
       } catch (err) {
         if (err instanceof Error) {
