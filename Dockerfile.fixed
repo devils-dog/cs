@@ -1,34 +1,14 @@
-# Этот Dockerfile предназначен для Node.js приложения с Express и React
 FROM node:18
-
-# Устанавливаем рабочую директорию
 WORKDIR /app
-
-# Копируем package.json и package-lock.json
 COPY package*.json ./
-
-# Устанавливаем зависимости
 RUN npm install
-
-# Копируем весь код
 COPY . .
-
-# Создаем директорию scripts если не существует
 RUN mkdir -p scripts
-
-# Копируем скрипт healthcheck
 COPY scripts/healthcheck.js ./scripts/healthcheck.js
-
-# Собираем бэкенд
 RUN npm run build:server
-
-# Копируем SQL файлы в dist после TypeScript сборки
 COPY server/db/migrations/001_initial.sql /app/dist/db/migrations/001_initial.sql
+COPY server/db/migrations/002_telegram_video.sql /app/dist/db/migrations/002_telegram_video.sql
 COPY server/db/seeds/001_maps.sql /app/dist/db/seeds/001_maps.sql
 COPY server/db/seeds/002_lineups.sql /app/dist/db/seeds/002_lineups.sql
-
-# Экспонируем порт
 EXPOSE 3000
-
-# Запускаем сервер с абсолютным путем
 CMD ["node", "/app/dist/server.js"]
