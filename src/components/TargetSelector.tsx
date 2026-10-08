@@ -29,9 +29,8 @@ const TargetSelector: React.FC<TargetSelectorProps> = ({ selectedTarget, onTarge
         if (side) filters.side = side
         if (grenadeType) filters.grenade_type = grenadeType
 
-        const result = await apiClient.getMapLineups(mapId, { ...filters, page: 1, limit: 100 })
-        const uniqueTargets = Array.from(new Set(result.items.map(item => item.target))).sort()
-        setTargets(uniqueTargets)
+        const result = await apiClient.getMapTargets(mapId, filters)
+        setTargets(result)
       } catch (err) {
         console.error('Error fetching targets:', err)
         setError('Failed to load targets')
