@@ -1,6 +1,5 @@
 import { Router } from 'express'
-import { validateMapId } from '../middleware/validation'
-import { validateMapId as zodValidateMapId } from '../middleware/zodValidation'
+import { validateMapId } from '../middleware/zodValidation'
 import { pool } from '../database'
 
 const router = Router()
@@ -33,7 +32,7 @@ router.get('/', async (req, res) => {
 })
 
 // Get a single map
-router.get('/:id', zodValidateMapId, async (req, res) => {
+router.get('/:id', validateMapId, async (req, res) => {
   try {
     const { id } = req.params
     const result = await pool.query(

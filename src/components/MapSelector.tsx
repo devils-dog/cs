@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { MapResponse } from '../api/types'
+import { ApiClient } from '../api/client'
 
 interface MapSelectorProps {
   onSelectMap: (map: MapResponse) => void
@@ -10,20 +11,21 @@ const MapSelector: React.FC<MapSelectorProps> = ({ onSelectMap, selectedMapId })
   const [maps, setMaps] = useState<MapResponse[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const apiClient = new ApiClient('/api')
 
   useEffect(() => {
     const fetchMaps = async () => {
       try {
         setLoading(true)
-        const response = await fetch('/api/maps')
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-        const data = await response.json()
+        const data = await apiClient.getMaps()
         setMaps(data)
         setLoading(false)
       } catch (err) {
-        setError(`Failed to fetch maps: ${err instanceof Error ? err.message : 'Unknown error'}`)
+        if (err instanceof Error) {
+          setError(`Failed to fetch maps: ${err.message}`)
+        } else {
+          setError('Failed to fetch maps: Unknown error')
+        }
         setLoading(false)
       }
     }

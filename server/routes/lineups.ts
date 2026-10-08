@@ -1,6 +1,7 @@
 import { Router } from 'express'
-import { validateLineupId } from '../middleware/validation'
-import { validateLineupId as zodValidateLineupId } from '../middleware/zodValidation'
+import { validateMapId } from '../middleware/zodValidation'
+import { validateLineupId } from '../middleware/zodValidation'
+import { validateQuery } from '../middleware/zodValidation'
 import { pool } from '../database'
 
 const router = Router()
@@ -14,12 +15,12 @@ const createErrorResponse = (code: string, message: string) => ({
 });
 
 // Get lineups for a map
-router.get('/maps/:mapId/lineups', zodValidateMapId, async (req, res) => {
+router.get('/maps/:mapId/lineups', validateMapId, validateQuery, async (req, res) => {
   try {
     const { mapId } = req.params
-    const { side, grenade_type, target, page = 1, limit = 30 } = req.query
+    const { side, grenade_type, target, page, limit } = req.query
     
-    // Build query with filters (using separate params for cleaner logic)
+    // Build query with filters
     const params: any[] = [mapId]
     let query = `
       SELECT id, map_id, side, grenade_type, target, title, description, 
@@ -28,7 +29,8 @@ router.get('/maps/:mapId/lineups', zodValidateMapId, async (req, res) => {
       WHERE map_id = $1
     `
     
-    let paramIndex = 2
+    // Track parameter indexes separately to avoid conflicts
+    let paramIndex = 2 // Start with 2 since $1 is used for mapId
     
     if (side) {
       query += ` AND side = $${paramIndex++}`
@@ -52,7 +54,7 @@ router.get('/maps/:mapId/lineups', zodValidateMapId, async (req, res) => {
     
     const result = await pool.query(query, params)
     
-    // Get total count using separate array to avoid parameter conflicts
+    // Get total count using separate array with clean indexing
     const countParams: any[] = [mapId]
     
     let countQuery = `
@@ -61,19 +63,20 @@ router.get('/maps/:mapId/lineups', zodValidateMapId, async (req, res) => {
       WHERE map_id = $1
     `
     
-    // Recreate the same filters for count query with separate param tracking
+    // Recreate the same filters for count query with clean param tracking
+    let countParamIndex = 2 // Same starting index for clean tracking
     if (side) {
-      countQuery += ` AND side = $${paramIndex++}`
+      countQuery += ` AND side = $${countParamIndex++}`
       countParams.push(side)
     }
     
     if (grenade_type) {
-      countQuery += ` AND grenade_type = $${paramIndex++}`
+      countQuery += ` AND grenade_type = $${countParamIndex++}`
       countParams.push(grenade_type)
     }
     
     if (target) {
-      countQuery += ` AND target = $${paramIndex++}`
+      countQuery += ` AND target = $${countParamIndex++}`
       countParams.push(target)
     }
     
@@ -92,7 +95,7 @@ router.get('/maps/:mapId/lineups', zodValidateMapId, async (req, res) => {
 })
 
 // Get a single lineup
-router.get('/:id', zodValidateLineupId, async (req, res) => {
+router.get('/:id', validateLineupId, async (req, res) => {
   try {
     const { id } = req.params
     const result = await pool.query(

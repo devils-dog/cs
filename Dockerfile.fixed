@@ -16,11 +16,8 @@ COPY . .
 # Собираем фронтенд
 RUN npm run build:client
 
-# Собираем бэкенд
-RUN npm run build:server
-
 # Экспонируем порт
 EXPOSE 3000
 
 # Запускаем сервер
-CMD ["npm", "run", "start"]
+CMD ["npm", "run", "server"]

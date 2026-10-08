@@ -1,5 +1,5 @@
 # Используем официальный образ Node.js в качестве базы
-FROM node:18
+FROM node:18 AS builder
 
 # Устанавливаем рабочую директорию
 WORKDIR /app
@@ -13,8 +13,20 @@ RUN npm install
 # Копируем остальные файлы
 COPY . .
 
-# Экспонируем порт
-EXPOSE 5173
+# Собираем фронтенд для production
+RUN npm run build:client
 
-# Команда запуска для разработки
-CMD ["npm", "run", "dev"]
+# Используем Nginx для продакшн сервера
+FROM nginx:alpine
+
+# Копируем конфиг Nginx
+COPY nginx.conf /etc/nginx/nginx.conf
+
+# Копируем фронтенд build в Nginx
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Экспонируем порт
+EXPOSE 80
+
+# Запускаем Nginx
+CMD ["nginx", "-g", "daemon off;"]

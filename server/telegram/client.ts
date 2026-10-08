@@ -27,20 +27,4 @@ export class TelegramClient {
       throw error
     }
   }
-  
-  async getChannelMessage(messageId: number) {
-    try {
-      const url = `https://api.telegram.org/bot${this.botToken}/getMessages`
-      const response = await axios.get(url, {
-        params: {
-          chat_id: this.channelId,
-          message_id: messageId
-        }
-      })
-      return response.data
-    } catch (error) {
-      console.error('Error getting channel message:', error)
-      throw error
-    }
-  }
 }

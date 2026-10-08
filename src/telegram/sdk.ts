@@ -1,18 +1,29 @@
 import { TelegramWebApp } from './types'
 
 let telegramWebApp: TelegramWebApp | null = null
+let initialized = false
 
 export const initTelegramWebApp = (): TelegramWebApp => {
   // Check if we're in a Telegram environment
   if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
-    telegramWebApp = window.Telegram.WebApp
-    telegramWebApp.ready()
-    telegramWebApp.expand()
+    if (!initialized) {
+      telegramWebApp = window.Telegram.WebApp
+      // Only call ready and expand if not already called by Telegram
+      // Note: In real app, ready() and expand() are typically called by Telegram itself
+      telegramWebApp.ready()
+      telegramWebApp.expand()
+      initialized = true
+    }
     return telegramWebApp
   }
 
   // Development mode - create mock Telegram WebApp
   console.warn('Telegram WebApp not available - running in development mode')
+  
+  // For development, we want to ensure the app starts even if no real Telegram env
+  if (initialized) {
+    return telegramWebApp as TelegramWebApp
+  }
   
   // Mock implementation for development
   const mockWebApp: TelegramWebApp = {
@@ -76,6 +87,7 @@ export const initTelegramWebApp = (): TelegramWebApp => {
   }
 
   telegramWebApp = mockWebApp
+  initialized = true
   return mockWebApp
 }
 

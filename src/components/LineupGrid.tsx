@@ -1,6 +1,9 @@
 import React from 'react'
 import LineupCard from './LineupCard'
 import { LineupResponse } from '../api/types'
+import LoadingState from './LoadingState'
+import ErrorState from './ErrorState'
+import EmptyState from './EmptyState'
 
 interface LineupGridProps {
   lineups: LineupResponse[]
@@ -18,27 +21,15 @@ const LineupGrid: React.FC<LineupGridProps> = ({
   empty = false
 }) => {
   if (loading) {
-    return (
-      <div className="lineup-grid">
-        <div className="loading">Loading lineups...</div>
-      </div>
-    )
+    return <LoadingState />
   }
 
   if (error) {
-    return (
-      <div className="lineup-grid">
-        <div className="error">Error: {error}</div>
-      </div>
-    )
+    return <ErrorState message={error} />
   }
 
   if (empty) {
-    return (
-      <div className="lineup-grid">
-        <div className="empty">No lineups found</div>
-      </div>
-    )
+    return <EmptyState />
   }
 
   return (

@@ -1,5 +1,6 @@
 import React from 'react'
 import { LineupResponse } from '../api/types'
+import { getTelegramWebApp } from '../telegram/sdk'
 
 interface LineupDetailsProps {
   lineup: LineupResponse
@@ -7,6 +8,20 @@ interface LineupDetailsProps {
 }
 
 const LineupDetails: React.FC<LineupDetailsProps> = ({ lineup, onBack }) => {
+  const openTelegramPost = () => {
+    const webApp = getTelegramWebApp()
+    if (webApp && webApp.initDataUnsafe && webApp.initDataUnsafe.user) {
+      // Deep linking to Telegram channel post
+      const telegramUrl = `https://t.me/c/0/${lineup.telegram_message_id}`
+      window.open(telegramUrl, '_blank')
+    } else {
+      // Fallback for development mode
+      console.warn('Not in Telegram environment, can\'t open Telegram post directly')
+      const telegramUrl = `https://t.me/c/0/${lineup.telegram_message_id}`
+      window.open(telegramUrl, '_blank')
+    }
+  }
+
   return (
     <div className="lineup-details">
       <button className="back-button" onClick={onBack}>
@@ -30,7 +45,13 @@ const LineupDetails: React.FC<LineupDetailsProps> = ({ lineup, onBack }) => {
       <div className="video-player-container">
         <h2>Video</h2>
         <div className="video-placeholder">
-          <p>Video would play here from Telegram channel</p>
+          <p>Watch the lineup video on Telegram</p>
+          <button 
+            className="open-telegram-button"
+            onClick={openTelegramPost}
+          >
+            Open video in Telegram
+          </button>
         </div>
       </div>
     </div>
