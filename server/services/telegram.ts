@@ -27,8 +27,15 @@ export interface TelegramChannelPost {
   video?: TelegramVideo
 }
 
+export interface TelegramMessage {
+  message_id: number
+  chat: { id: number; type: string }
+  text?: string
+}
+
 export interface TelegramUpdate {
   update_id: number
+  message?: TelegramMessage
   channel_post?: TelegramChannelPost
 }
 
@@ -71,11 +78,29 @@ export const setWebhook = async (): Promise<void> => {
 
   await callTelegram<boolean>('setWebhook', {
     url,
-    allowed_updates: ['channel_post'],
+    allowed_updates: ['message', 'channel_post'],
     ...(secret ? { secret_token: secret } : {})
   })
 
   console.log(`Telegram webhook configured: ${url}`)
+}
+
+export const sendStartMessage = async (chatId: number): Promise<void> => {
+  const webAppUrl = process.env.TELEGRAM_WEBAPP_URL?.trim()
+  if (!webAppUrl) throw new Error('TELEGRAM_WEBAPP_URL is not configured')
+
+  await callTelegram('sendMessage', {
+    chat_id: chatId,
+    text: '🎯 CS2 Nades\\n\\nОткрой базу раскидок:',
+    reply_markup: {
+      inline_keyboard: [[
+        {
+          text: '🎯 Открыть CS2 Nades',
+          web_app: { url: webAppUrl }
+        }
+      ]]
+    }
+  })
 }
 
 export const getTelegramFile = (fileId: string): Promise<TelegramFile> =>
