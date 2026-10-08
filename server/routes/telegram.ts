@@ -7,7 +7,7 @@ const errorResponse = (code: string, message: string) => ({ error: { code, messa
 
 const parseLineupId = (caption?: string): string | undefined => {
   const firstLine = caption?.split(/\r?\n/).map(line => line.trim()).find(Boolean)
-  return firstLine && /^[a-z0-9-]+$/.test(firstLine) ? firstLine : undefined
+  return firstLine && /^[a-z0-9_-]+$/.test(firstLine) ? firstLine : undefined
 }
 
 router.post('/webhook', async (req, res) => {
