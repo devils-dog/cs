@@ -30,7 +30,7 @@ const LineupDetails: React.FC<LineupDetailsProps> = ({ lineup, onBack }) => {
       
       <div className="video-player-container">
         <h2>Video</h2>
-        <VideoPlayer telegramMessageId={lineup.telegram_message_id} />
+        <VideoPlayer telegramMessageId={lineup.telegram_message_id} telegramUrl={lineup.telegram_url} />
       </div>
     </div>
   )

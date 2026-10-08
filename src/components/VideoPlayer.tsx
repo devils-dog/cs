@@ -3,21 +3,27 @@ import { getTelegramWebApp } from '../telegram/sdk'
 
 interface VideoPlayerProps {
   telegramMessageId: number
+  telegramUrl?: string
   onVideoUnavailable?: () => void
 }
 
-const VideoPlayer: React.FC<VideoPlayerProps> = ({ telegramMessageId, onVideoUnavailable }) => {
+const VideoPlayer: React.FC<VideoPlayerProps> = ({ telegramMessageId, telegramUrl, onVideoUnavailable }) => {
   const openTelegramPost = () => {
     const webApp = getTelegramWebApp()
     if (webApp && webApp.initDataUnsafe && webApp.initDataUnsafe.user) {
-      // Use Telegram's deep linking to open the message in the channel
-      const telegramUrl = `https://t.me/${process.env.TELEGRAM_CHANNEL_USERNAME}/${telegramMessageId}`
-      window.open(telegramUrl, '_blank')
+      // If we have a pre-formatted URL from the API, use it
+      if (telegramUrl) {
+        window.open(telegramUrl, '_blank')
+      } else {
+        // Fallback for development mode - construct URL from message ID
+        const fallbackUrl = `https://t.me/${process.env.TELEGRAM_CHANNEL_USERNAME}/${telegramMessageId}`
+        window.open(fallbackUrl, '_blank')
+      }
     } else {
       // Fallback for development mode - show a fallback link or handle gracefully
       console.warn('Not in Telegram environment, showing fallback for video access')
-      const telegramUrl = `https://t.me/${process.env.TELEGRAM_CHANNEL_USERNAME}/${telegramMessageId}`
-      window.open(telegramUrl, '_blank')
+      const fallbackUrl = `https://t.me/${process.env.TELEGRAM_CHANNEL_USERNAME}/${telegramMessageId}`
+      window.open(fallbackUrl, '_blank')
     }
   }
 

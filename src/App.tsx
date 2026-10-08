@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import { ApiClient } from './api/client'
 import { MapResponse, LineupResponse } from './api/types'
+import { apiClient } from './api/clientSingleton'
 import AppLayout from './components/AppLayout'
 import MapSelector from './components/MapSelector'
 import SideSelector from './components/SideSelector'
@@ -21,9 +21,6 @@ function App() {
   const [lineupsLoading, setLineupsLoading] = useState(false)
   const [lineupsError, setLineupsError] = useState<string | null>(null)
   const [lineupsEmpty, setLineupsEmpty] = useState(false)
-  
-  // Create API client (should be a global singleton)
-  const apiClient = new ApiClient('/api')
   
   // Initialize Telegram WebApp once only
   useEffect(() => {

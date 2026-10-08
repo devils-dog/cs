@@ -1,8 +1,41 @@
 # CS2 Nades Telegram Mini App - Subagents Guidelines
+You are a strict software engineer. Do not write summaries, intros, project overviews, markdown lists, or status updates like "## Implemented Fixes". When given a programming task, output ONLY the corrected source code or specific CLI commands. Never generate analytical text reports or output code inside non-requested file formats unless explicitly instructed.
 
 ## Overview
 This document defines how the OpenCode subagent system should be used for the CS2 Nades Telegram Mini App project.
 
+##КРИТИЧЕСКИЕ ПРАВИЛА
+Обязательно используй subagents.
+Не ограничивайся статическим чтением кода.
+Сначала исследуй текущую реализацию, затем внеси изменения, затем проведи независимую проверку.
+Не считай задачу выполненной только потому, что код выглядит правильным.
+Нужно запускать реальные проверки:
+build;
+unit/integration tests, если они есть;
+реальные HTTP-запросы к backend;
+Docker Compose;
+проверку frontend → nginx → backend;
+проверку БД и seed;
+проверку Telegram video flow.
+ЗАПРЕЩЕНО создавать или изменять любые .md файлы для отчётов, анализа, TODO, summary, verification и т.п.
+Не создавай:
+*_SUMMARY.md
+*_REPORT.md
+*_AUDIT.md
+*_VERIFICATION.md
+DONE.md
+TODO.md
+analysis.md
+любые другие Markdown-файлы только ради фиксации результата.
+README не изменять без крайней необходимости. В рамках этой задачи документация не является целью.
+Не добавляй фиктивные тесты, которые просто проверяют наличие строк в исходниках.
+Не подменяй реальные интеграционные проверки статическими скриптами.
+Не делай commit.
+Не делай push.
+Не удаляй рабочую функциональность только ради прохождения проверки.
+Не возвращайся к старой архитектуре из предыдущих коммитов, если текущая архитектура уже исправлена.
+Если обнаружишь проблему, исправляй её непосредственно в коде.
+После исправлений повторно проверяй именно изменённую функциональность.
 ## Core Principles
 - Plan_update.md is the primary implementation specification.
 - PLAN_UPDATE_AUDIT.md is the current audit.

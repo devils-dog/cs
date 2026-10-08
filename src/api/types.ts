@@ -17,6 +17,7 @@ export interface LineupResponse {
   description?: string;
   telegram_message_id: number;
   thumbnail_url?: string;
+  telegram_url?: string;
 }
 
 export interface LineupListResponse {

@@ -33,7 +33,15 @@ router.get('/:id', validateLineupId, async (req, res) => {
       return res.status(404).json(createErrorResponse('NOT_FOUND', 'Lineup not found'))
     }
     
-    res.json(result.rows[0])
+    const lineup = result.rows[0]
+    // Generate the telegram URL for this lineup
+    const telegramUrl = `https://t.me/${process.env.TELEGRAM_CHANNEL_USERNAME}/${lineup.telegram_message_id}`
+    
+    // Return the lineup with the added telegram_url
+    res.json({
+      ...lineup,
+      telegram_url: telegramUrl
+    })
   } catch (error) {
     console.error('Error getting lineup:', error)
     // Handle database errors with standard error format

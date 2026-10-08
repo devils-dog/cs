@@ -4,12 +4,12 @@ import { ApiError } from './errorHandler';
 
 // Schema for map ID validation
 export const mapIdSchema = z.object({
-  id: z.string().regex(/^[0-9]+$/, "Map ID must be a positive integer")
+  id: z.string().regex(/^[a-z0-9-]+$/, "Map ID must be a valid string")
 });
 
 // Schema for lineup ID validation  
 export const lineupIdSchema = z.object({
-  id: z.string().regex(/^[0-9]+$/, "Lineup ID must be a positive integer")
+  id: z.string().regex(/^[a-z0-9-]+$/, "Lineup ID must be a valid string")
 });
 
 // Schema for query parameters

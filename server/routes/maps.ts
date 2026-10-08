@@ -137,8 +137,17 @@ router.get('/:id/lineups', validateMapId, validateQuery, async (req, res) => {
     
     const countResult = await pool.query(countQuery, countParams)
     
+    // Process the results to add telegram_url to each lineup
+    const processedResults = result.rows.map(lineup => {
+      const telegramUrl = `https://t.me/${process.env.TELEGRAM_CHANNEL_USERNAME}/${lineup.telegram_message_id}`
+      return {
+        ...lineup,
+        telegram_url: telegramUrl
+      }
+    })
+    
     res.json({
-      items: result.rows,
+      items: processedResults,
       page: Number(page),
       limit: Number(limit),
       total: Number(countResult.rows[0].total)

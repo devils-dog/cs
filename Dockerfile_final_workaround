@@ -13,11 +13,6 @@ RUN npm install
 # Копируем весь код
 COPY . .
 
-# Копируем SQL файлы для базы данных
-COPY server/db/migrations/001_initial.sql /app/server/db/migrations/001_initial.sql
-COPY server/db/seed/001_maps.sql /app/server/db/seed/001_maps.sql
-COPY server/db/seed/002_lineups.sql /app/server/db/seed/002_lineups.sql
-
 # Создаем директорию scripts если не существует
 RUN mkdir -p scripts
 
@@ -30,5 +25,5 @@ RUN npm run build:server
 # Экспонируем порт
 EXPOSE 3000
 
-# Запускаем сервер с абсолютным путем
-CMD ["node", "/app/dist/server.js"]
+# Запускаем через node для обеспечения правильного пути
+CMD ["node", "dist/server/server.js"]

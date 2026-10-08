@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { apiClient } from '../api/clientSingleton'
 
 interface TargetSelectorProps {
   selectedTarget: string | null
@@ -23,19 +24,14 @@ const TargetSelector: React.FC<TargetSelectorProps> = ({ selectedTarget, onTarge
       
       try {
         // Build query parameters based on current selections
-        const params = new URLSearchParams()
-        if (side) params.append('side', side)
-        if (grenadeType) params.append('grenade_type', grenadeType)
+        const filters: any = {}
+        if (side) filters.side = side
+        if (grenadeType) filters.grenade_type = grenadeType
         
         // Fetch targets by getting lineups and extracting unique targets
-        const response = await fetch(`/api/maps/${mapId}/lineups?${params.toString()}`)
+        const result = await apiClient.getMapLineups(mapId, filters)
         
-        if (!response.ok) {
-          throw new Error(`Failed to fetch lineups: ${response.status} ${response.statusText}`)
-        }
-        
-        const data = await response.json()
-        const uniqueTargets = Array.from(new Set(data.items.map((item: any) => item.target))).sort()
+        const uniqueTargets = Array.from(new Set(result.items.map((item: any) => item.target))).sort()
         setTargets(uniqueTargets)
       } catch (err) {
         console.error('Error fetching targets:', err)
