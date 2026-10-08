@@ -43,6 +43,22 @@ export class ApiClient {
     return this.fetchJson<MapResponse>(`${this.baseUrl}/maps/${id}`)
   }
 
+  async getMapTargets(
+    mapId: string,
+    filters?: {
+      side?: 'T' | 'CT'
+      grenade_type?: 'smoke' | 'flash' | 'molotov' | 'he'
+    }
+  ): Promise<string[]> {
+    const params = new URLSearchParams()
+    if (filters?.side) params.append('side', filters.side)
+    if (filters?.grenade_type) params.append('grenade_type', filters.grenade_type)
+
+    return this.fetchJson<string[]>(
+      `${this.baseUrl}/maps/${mapId}/targets${params.toString() ? '?' + params.toString() : ''}`
+    )
+  }
+
   async getMapLineups(
     mapId: string,
     filters?: {
