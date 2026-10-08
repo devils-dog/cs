@@ -16,9 +16,10 @@ export const query = (text: string, params: any[]) => {
 export const connect = async () => {
   try {
     await pool.connect();
-    console.log('Connected to PostgreSQL database');
+    console.log('Connected to PostgreSQL database successfully');
   } catch (error) {
     console.error('Database connection error:', error);
+    console.error('Database connection failed. Check database configuration and connectivity.');
     throw error;
   }
 };

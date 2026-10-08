@@ -3,7 +3,6 @@ import { validateMapId } from '../middleware/zodValidation'
 import { validateLineupId } from '../middleware/zodValidation'
 import { validateQuery } from '../middleware/zodValidation'
 import { pool } from '../database'
-import { ApiError } from '../middleware/errorHandler'
 
 const router = Router()
 
@@ -15,64 +14,10 @@ const createErrorResponse = (code: string, message: string) => ({
   }
 });
 
-// Get all maps
-router.get('/', async (req, res) => {
+// Get lineups for a map
+router.get('/maps/:mapId/lineups', validateMapId, validateQuery, async (req, res) => {
   try {
-    const result = await pool.query(
-      `
-      SELECT id, slug, name, thumbnail_url, sort_order, 
-      (SELECT COUNT(*) FROM lineups WHERE map_id = maps.id) as lineup_count
-      FROM maps 
-      ORDER BY sort_order
-    `
-    )
-    
-    res.json(result.rows)
-  } catch (error) {
-    console.error('Error getting maps:', error)
-    // Handle database errors with standard error format
-    if (error instanceof Error) {
-      res.status(500).json(createErrorResponse('DATABASE_ERROR', 'Database error occurred'))
-    } else {
-      res.status(500).json(createErrorResponse('INTERNAL_ERROR', 'Internal server error'))
-    }
-  }
-})
-
-// Get a single map
-router.get('/:id', validateMapId, async (req, res) => {
-  try {
-    const { id } = req.params
-    const result = await pool.query(
-      `
-      SELECT id, slug, name, thumbnail_url, sort_order, 
-      (SELECT COUNT(*) FROM lineups WHERE map_id = maps.id) as lineup_count
-      FROM maps 
-      WHERE id = $1
-    `,
-      [id]
-    )
-    
-    if (result.rows.length === 0) {
-      return res.status(404).json(createErrorResponse('NOT_FOUND', 'Map not found'))
-    }
-    
-    res.json(result.rows[0])
-  } catch (error) {
-    console.error('Error getting map:', error)
-    // Handle database errors with standard error format
-    if (error instanceof Error) {
-      res.status(500).json(createErrorResponse('DATABASE_ERROR', 'Database error occurred'))
-    } else {
-      res.status(500).json(createErrorResponse('INTERNAL_ERROR', 'Internal server error'))
-    }
-  }
-})
-
-// Get lineups for a map (subroute)
-router.get('/:id/lineups', validateMapId, validateQuery, async (req, res) => {
-  try {
-    const { id: mapId } = req.params
+    const { mapId } = req.params
     const { side, grenade_type, target, page, limit } = req.query
     
     // Build query with filters
@@ -86,7 +31,7 @@ router.get('/:id/lineups', validateMapId, validateQuery, async (req, res) => {
     
     // Track parameter indexes separately to avoid conflicts
     let paramIndex = 2 // Start with 2 since $1 is used for mapId
-    let countParamIndex = 2 // Same starting index for clean tracking
+    let paramIndex2 = 2 // For the separate count query
     
     if (side) {
       query += ` AND side = $${paramIndex++}`
@@ -120,6 +65,7 @@ router.get('/:id/lineups', validateMapId, validateQuery, async (req, res) => {
     `
     
     // Recreate the same filters for count query with clean param tracking
+    let countParamIndex = 2 // Same starting index for clean tracking
     if (side) {
       countQuery += ` AND side = $${countParamIndex++}`
       countParams.push(side)
@@ -145,14 +91,33 @@ router.get('/:id/lineups', validateMapId, validateQuery, async (req, res) => {
     })
   } catch (error) {
     console.error('Error getting lineups:', error)
-    // Handle database errors with standard error format
-    if (error instanceof Error) {
-      res.status(500).json(createErrorResponse('DATABASE_ERROR', 'Database error occurred'))
-    } else {
-      res.status(500).json(createErrorResponse('INTERNAL_ERROR', 'Internal server error'))
-    }
+    res.status(500).json(createErrorResponse('INTERNAL_SERVER_ERROR', 'Internal server error'))
   }
 })
 
+// Get a single lineup
+router.get('/:id', validateLineupId, async (req, res) => {
+  try {
+    const { id } = req.params
+    const result = await pool.query(
+      `
+      SELECT id, map_id, side, grenade_type, target, title, description, 
+      telegram_message_id, thumbnail_url, created_at, updated_at
+      FROM lineups 
+      WHERE id = $1
+    `,
+      [id]
+    )
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json(createErrorResponse('LINEUP_NOT_FOUND', 'Lineup not found'))
+    }
+    
+    res.json(result.rows[0])
+  } catch (error) {
+    console.error('Error getting lineup:', error)
+    res.status(500).json(createErrorResponse('INTERNAL_SERVER_ERROR', 'Internal server error'))
+  }
+})
 
 export default router

@@ -1,25 +1,33 @@
 import { ErrorRequestHandler } from 'express'
 
-// Standard error response format
-const createErrorResponse = (code: string, message: string, details?: any) => ({
+// Standard error response format - consistent with plan_update.md requirements
+const createErrorResponse = (code: string, message: string) => ({
   error: {
     code,
-    message,
-    ...(details && { details })
+    message
   }
 });
+
+// Custom ApiError class for consistent error handling
+class ApiError extends Error {
+  constructor(public code: string, message: string) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
 
 export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
   console.error(err)
 
-  // Generic internal server error
-  const internalError = createErrorResponse('INTERNAL_ERROR', 'Internal server error');
-
-  // Return appropriate error based on error type
+  // Handle our custom API errors
   if (err.name === 'ApiError') {
-    res.status(400).json(createErrorResponse(err.message, err.message));
+    // For API validation errors, return 400
+    res.status(400).json(createErrorResponse(err.code, err.message));
   } else {
-    // For unhandled errors, send generic error (this won't be reached in our current setup)
-    res.status(500).json(internalError);
+    // For unexpected server errors, return 500 with appropriate codes
+    res.status(500).json(createErrorResponse('INTERNAL_ERROR', 'Internal server error'));
   }
 }
+
+// Export the ApiError class for use elsewhere
+export { ApiError };

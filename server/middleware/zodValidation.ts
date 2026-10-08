@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { z } from 'zod';
+import { ApiError } from './errorHandler';
 
 // Schema for map ID validation
 export const mapIdSchema = z.object({
@@ -27,6 +28,7 @@ export const validateMapId = (req: Request, res: Response, next: NextFunction) =
     next();
   } catch (error) {
     if (error instanceof z.ZodError) {
+      // Handle Zod validation errors with the new standard
       return res.status(400).json({
         error: {
           code: 'INVALID_MAP_ID',
@@ -38,9 +40,10 @@ export const validateMapId = (req: Request, res: Response, next: NextFunction) =
         }
       });
     }
+    // Catch any unexpected errors
     return res.status(500).json({
       error: {
-        code: 'INTERNAL_SERVER_ERROR',
+        code: 'INTERNAL_ERROR',
         message: 'Internal server error during validation'
       }
     });
@@ -54,6 +57,7 @@ export const validateLineupId = (req: Request, res: Response, next: NextFunction
     next();
   } catch (error) {
     if (error instanceof z.ZodError) {
+      // Handle Zod validation errors with the new standard
       return res.status(400).json({
         error: {
           code: 'INVALID_LINEUP_ID',
@@ -65,9 +69,10 @@ export const validateLineupId = (req: Request, res: Response, next: NextFunction
         }
       });
     }
+    // Catch any unexpected errors
     return res.status(500).json({
       error: {
-        code: 'INTERNAL_SERVER_ERROR',
+        code: 'INTERNAL_ERROR',
         message: 'Internal server error during validation'
       }
     });
@@ -81,9 +86,10 @@ export const validateQuery = (req: Request, res: Response, next: NextFunction) =
     next();
   } catch (error) {
     if (error instanceof z.ZodError) {
+      // Handle Zod validation errors with the new standard
       return res.status(400).json({
         error: {
-          code: 'INVALID_QUERY_PARAMETERS',
+          code: 'INVALID_REQUEST',
           message: 'Invalid query parameters provided',
           details: error.errors.map(e => ({
             field: e.path.join('.'),
@@ -92,9 +98,10 @@ export const validateQuery = (req: Request, res: Response, next: NextFunction) =
         }
       });
     }
+    // Catch any unexpected errors
     return res.status(500).json({
       error: {
-        code: 'INTERNAL_SERVER_ERROR',
+        code: 'INTERNAL_ERROR',
         message: 'Internal server error during validation'
       }
     });

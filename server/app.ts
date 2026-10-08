@@ -8,7 +8,12 @@ const app = express()
 // Middleware
 app.use(express.json())
 
-// Routes
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'OK', timestamp: new Date() });
+});
+
+// Routes - fixing API routing to match plan requirements
 app.use('/api/maps', mapsRoutes)
 app.use('/api/lineups', lineupsRoutes)
 

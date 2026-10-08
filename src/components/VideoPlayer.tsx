@@ -11,12 +11,12 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ telegramMessageId, onVideoUna
     const webApp = getTelegramWebApp()
     if (webApp && webApp.initDataUnsafe && webApp.initDataUnsafe.user) {
       // Use Telegram's deep linking to open the message in the channel
-      const telegramUrl = `https://t.me/c/0/${telegramMessageId}`
+      const telegramUrl = `https://t.me/${process.env.TELEGRAM_CHANNEL_USERNAME}/${telegramMessageId}`
       window.open(telegramUrl, '_blank')
     } else {
       // Fallback for development mode - show a fallback link or handle gracefully
       console.warn('Not in Telegram environment, showing fallback for video access')
-      const telegramUrl = `https://t.me/c/0/${telegramMessageId}`
+      const telegramUrl = `https://t.me/${process.env.TELEGRAM_CHANNEL_USERNAME}/${telegramMessageId}`
       window.open(telegramUrl, '_blank')
     }
   }

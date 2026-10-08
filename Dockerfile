@@ -13,14 +13,14 @@ RUN npm install
 # Копируем весь код
 COPY . .
 
-# Собираем фронтенд
-RUN npm run build:client
-
 # Собираем бэкенд
 RUN npm run build:server
+
+# Создаем директорию для логов
+RUN mkdir -p logs
 
 # Экспонируем порт
 EXPOSE 3000
 
-# Запускаем сервер
-CMD ["npm", "run", "start"]
+# Запускаем сервер с логированием
+CMD ["npm", "start"]

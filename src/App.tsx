@@ -5,6 +5,7 @@ import AppLayout from './components/AppLayout'
 import MapSelector from './components/MapSelector'
 import SideSelector from './components/SideSelector'
 import GrenadeTypeSelector from './components/GrenadeTypeSelector'
+import TargetSelector from './components/TargetSelector'
 import LineupGrid from './components/LineupGrid'
 import LineupDetails from './components/LineupDetails'
 import { initTelegramWebApp } from './telegram/sdk'
@@ -21,7 +22,7 @@ function App() {
   const [lineupsError, setLineupsError] = useState<string | null>(null)
   const [lineupsEmpty, setLineupsEmpty] = useState(false)
   
-  // Create API client
+  // Create API client (should be a global singleton)
   const apiClient = new ApiClient('/api')
   
   // Initialize Telegram WebApp once only
@@ -151,6 +152,13 @@ function App() {
                   <GrenadeTypeSelector 
                     selectedGrenadeType={selectedGrenadeType} 
                     onGrenadeTypeSelect={handleGrenadeTypeSelect} 
+                  />
+                  <TargetSelector 
+                    selectedTarget={selectedTarget}
+                    onTargetSelect={handleTargetSelect}
+                    mapId={selectedMap?.id}
+                    side={selectedSide}
+                    grenadeType={selectedGrenadeType}
                   />
                 </div>
                 
