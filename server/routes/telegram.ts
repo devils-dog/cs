@@ -63,6 +63,7 @@ const send = (chatId: number, message: string, rows?: Array<Array<Record<string,
   sendTelegramMessage(chatId, message, rows)
 
 const mainMenu = (chatId: number) => send(chatId, '🛠 CS2 Nades — панель администратора', [
+  ...(process.env.TELEGRAM_WEBAPP_URL?.trim() ? [[{ text: '🎯 Открыть Mini App', web_app: { url: process.env.TELEGRAM_WEBAPP_URL.trim() } }]] : []),
   [{ text: '➕ Добавить раскидку', callback_data: 'admin:add' }],
   [{ text: '📚 Каталог раскидок', callback_data: 'admin:list:0' }, { text: '🔎 Поиск', callback_data: 'admin:search' }],
   [{ text: '📊 Статистика', callback_data: 'admin:stats' }]
