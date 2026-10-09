@@ -27,6 +27,7 @@ export interface TelegramMessage {
   text?: string
   caption?: string
   video?: TelegramVideo
+  photo?: Array<{ file_id: string; file_unique_id: string; width: number; height: number; file_size?: number }>
   document?: { file_id: string; mime_type?: string; file_size?: number }
 }
 
