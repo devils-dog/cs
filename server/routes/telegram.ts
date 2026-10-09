@@ -20,7 +20,7 @@ const router = Router()
 const errorResponse = (code: string, message: string) => ({ error: { code, message } })
 
 type AdminSession = {
-  mode: 'create' | 'replace' | 'edit' | 'search'
+  mode: 'create' | 'replace' | 'thumbnail' | 'edit' | 'search'
   step: string
   lineupId?: string
   mapId?: string
@@ -91,7 +91,7 @@ const validText = (value: string, max: number): string => value.trim().slice(0, 
 const showLineup = async (chatId: number, lineupId: string): Promise<void> => {
   const result = await pool.query(
     `SELECT l.id, l.map_id, m.name AS map_name, l.side, l.grenade_type, l.target, l.title,
-            l.description, l.telegram_message_id, l.telegram_file_id
+            l.description, l.telegram_message_id, l.telegram_file_id, l.telegram_thumbnail_file_id
      FROM lineups l JOIN maps m ON m.id = l.map_id WHERE l.id = $1`,
     [lineupId]
   )
@@ -109,6 +109,8 @@ const showLineup = async (chatId: number, lineupId: string): Promise<void> => {
       [{ text: '🗺 Карта', callback_data: `admin:editmap:${l.id}` }, { text: '🛡 Сторона', callback_data: `admin:editside:${l.id}` }],
       [{ text: '💣 Тип гранаты', callback_data: `admin:editgrenade:${l.id}` }],
       [{ text: '🎞 Заменить видео', callback_data: `admin:replace:${l.id}` }],
+      [{ text: '🖼️ Загрузить / заменить превью', callback_data: `admin:thumbnail:${l.id}` }],
+      ...(l.telegram_thumbnail_file_id ? [[{ text: '🗑 Удалить превью', callback_data: `admin:thumbnaildelete:${l.id}` }]] : []),
       [{ text: '🗑 Удалить', callback_data: `admin:delete:${l.id}` }],
       [{ text: '⬅ Каталог', callback_data: 'admin:list:0' }, { text: '🏠 Меню', callback_data: 'admin:home' }]
     ])
@@ -356,6 +358,25 @@ const handleAdminCallback = async (userId: number, chatId: number, data: string)
     await send(chatId, prompt[field], [[{ text: '✖ Отмена', callback_data: 'admin:cancel' }]])
     return
   }
+  if (data.startsWith('admin:thumbnaildelete:')) {
+    const lineupId = data.slice('admin:thumbnaildelete:'.length)
+    const result = await pool.query(
+      'UPDATE lineups SET telegram_thumbnail_file_id = NULL, telegram_thumbnail_mime_type = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING id',
+      [lineupId]
+    )
+    if (!result.rows.length) { await send(chatId, 'Раскидка не найдена.'); return }
+    await send(chatId, '🗑 Превью удалено. Видео и раскидка не изменены.')
+    await showLineup(chatId, lineupId)
+    return
+  }
+  if (data.startsWith('admin:thumbnail:')) {
+    const lineupId = data.slice('admin:thumbnail:'.length)
+    const exists = await pool.query('SELECT id FROM lineups WHERE id = $1', [lineupId])
+    if (!exists.rows.length) { await send(chatId, 'Раскидка не найдена.'); return }
+    await setSession(userId, { mode: 'thumbnail', step: 'image', lineupId })
+    await send(chatId, '🖼️ Отправь превью одним сообщением: фотографией или изображением как файл. Поддерживаются JPEG, PNG и WebP. Отправка нового изображения заменит текущее.', [[{ text: '✖ Отмена', callback_data: 'admin:cancel' }]])
+    return
+  }
   if (data.startsWith('admin:replace:')) {
     const lineupId = data.slice('admin:replace:'.length)
     const exists = await pool.query('SELECT id FROM lineups WHERE id = $1', [lineupId])
@@ -438,6 +459,30 @@ const handleAdminMessage = async (message: NonNullable<TelegramUpdate['message']
     return
   }
 
+  if (state.mode === 'thumbnail' && state.step === 'image' && state.lineupId) {
+    const photo = message.photo?.[message.photo.length - 1]
+    const document = message.document
+    const isImageDocument = Boolean(document?.mime_type && ['image/jpeg', 'image/png', 'image/webp'].includes(document.mime_type))
+    const fileId = photo?.file_id || (isImageDocument ? document?.file_id : undefined)
+    const mimeType = photo ? 'image/jpeg' : (isImageDocument ? document?.mime_type : undefined)
+    const fileSize = photo?.file_size ?? document?.file_size
+    if (!fileId || !mimeType) {
+      await send(chatId, '❌ Нужна фотография или файл JPEG, PNG или WebP. Попробуй ещё раз или напиши /cancel.')
+      return
+    }
+    if (fileSize && fileSize > 10 * 1024 * 1024) {
+      await send(chatId, '❌ Изображение больше 10 МБ. Отправь файл меньшего размера.')
+      return
+    }
+    const saved = await pool.query(
+      'UPDATE lineups SET telegram_thumbnail_file_id = $1, telegram_thumbnail_mime_type = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3 RETURNING id',
+      [fileId, mimeType, state.lineupId]
+    )
+    await clearSession(userId)
+    if (!saved.rows.length) { await send(chatId, 'Раскидка не найдена.'); return }
+    await send(chatId, '✅ Превью сохранено. Оно появится в карточке раскидки на сайте.', [[{ text: 'Открыть раскидку', callback_data: `admin:open:${state.lineupId}` }], [{ text: '🏠 Меню', callback_data: 'admin:home' }]])
+    return
+  }
   if (state.mode === 'search' && state.step === 'query' && text) {
     await clearSession(userId)
     await showList(chatId, 0, validText(text, 100))
@@ -555,6 +600,30 @@ router.post('/webhook', async (req, res) => {
   } catch (error) {
     console.error('Error processing Telegram webhook:', error)
     return res.status(500).json(errorResponse('TELEGRAM_WEBHOOK_ERROR', 'Failed to process Telegram update'))
+  }
+})
+
+router.get('/lineups/:id/thumbnail', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT telegram_thumbnail_file_id, telegram_thumbnail_mime_type FROM lineups WHERE id = $1',
+      [req.params.id]
+    )
+    if (!result.rows.length) return res.status(404).json(errorResponse('NOT_FOUND', 'Lineup not found'))
+    const lineup = result.rows[0]
+    if (!lineup.telegram_thumbnail_file_id) return res.status(404).json(errorResponse('THUMBNAIL_NOT_FOUND', 'Thumbnail is not linked'))
+    const file = await getTelegramFile(lineup.telegram_thumbnail_file_id)
+    if (!file.file_path) return res.status(502).json(errorResponse('TELEGRAM_FILE_ERROR', 'Telegram did not return an image path'))
+    const upstream = await streamTelegramFile(file.file_path, req.get('Range'))
+    res.status(upstream.status === 206 ? 206 : 200)
+    res.setHeader('Content-Type', lineup.telegram_thumbnail_mime_type || 'image/jpeg')
+    res.setHeader('Cache-Control', 'public, max-age=3600')
+    upstream.data.on('error', error => { console.error('Telegram thumbnail stream error:', error); if (!res.headersSent) res.status(502); res.end() })
+    upstream.data.pipe(res)
+  } catch (error: any) {
+    console.error('Error streaming Telegram thumbnail:', error)
+    if (error?.response?.status === 404) return res.status(404).json(errorResponse('TELEGRAM_FILE_NOT_FOUND', 'Telegram image file not found'))
+    return res.status(502).json(errorResponse('TELEGRAM_ERROR', 'Failed to load Telegram thumbnail'))
   }
 })
 
