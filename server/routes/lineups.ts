@@ -10,7 +10,8 @@ router.get('/:id', validateLineupId, async (req, res) => {
     const result = await pool.query(`
       SELECT id, map_id, side, grenade_type, target, title, description,
       telegram_message_id, telegram_file_id, telegram_mime_type, telegram_file_size,
-      thumbnail_url, created_at, updated_at
+      CASE WHEN telegram_thumbnail_file_id IS NOT NULL THEN '/api/telegram/lineups/' || id || '/thumbnail' ELSE thumbnail_url END AS thumbnail_url,
+      telegram_thumbnail_file_id, telegram_thumbnail_mime_type, created_at, updated_at
       FROM lineups WHERE id = $1
     `, [req.params.id])
 
