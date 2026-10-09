@@ -54,6 +54,7 @@ const initializeDatabase = async () => {
     const telegramVideoMigrationPath = path.join(__dirname, '..', 'db', 'migrations', '002_telegram_video.sql');
     const mapSelectionMigrationPath = path.join(__dirname, '..', 'db', 'migrations', '003_map_selection.sql');
     const supportedMapsMigrationPath = path.join(__dirname, '..', 'db', 'migrations', '004_remove_unsupported_maps.sql');
+    const telegramAdminSessionsMigrationPath = path.join(__dirname, '..', 'db', 'migrations', '005_telegram_admin_sessions.sql');
     const seedMapsPath = path.join(__dirname, '..', 'db', 'seeds', '001_maps.sql');
     const seedLineupsPath = path.join(__dirname, '..', 'db', 'seeds', '002_lineups.sql');
 
@@ -61,6 +62,7 @@ const initializeDatabase = async () => {
     await executeMigrationWithTransaction(telegramVideoMigrationPath, '002_telegram_video');
     await executeMigrationWithTransaction(mapSelectionMigrationPath, '003_map_selection');
     await executeMigrationWithTransaction(supportedMapsMigrationPath, '004_remove_unsupported_maps');
+    await executeMigrationWithTransaction(telegramAdminSessionsMigrationPath, '005_telegram_admin_sessions');
     await executeSQLFile(seedMapsPath);
     await executeSQLFile(seedLineupsPath);
 
