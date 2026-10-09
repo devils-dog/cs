@@ -246,7 +246,9 @@ const handleAdminCallback = async (userId: number, chatId: number, data: string)
     return
   }
   if (data === 'admin:filters') {
-    await send(chatId, 'Фильтр каталога — выбери карту:', mapKeyboard('admin:filtermap').map((row, index, all) => row))
+    const keyboard = mapKeyboard('admin:filtermap')
+    keyboard.unshift([{ text: 'Все карты', callback_data: 'admin:filtermap:all' }])
+    await send(chatId, 'Фильтр каталога — выбери карту:', keyboard)
     return
   }
   if (data.startsWith('admin:filtermap:')) {
@@ -260,7 +262,7 @@ const handleAdminCallback = async (userId: number, chatId: number, data: string)
     return
   }
   if (data.startsWith('admin:filterside:')) {
-    const [, , , mapId, side] = data.split(':')
+    const [, , mapId, side] = data.split(':')
     if (!mapId || !side) return
     await send(chatId, 'Теперь выбери тип гранаты:', [
       [{ text: 'Все типы', callback_data: `admin:filtergrenade:${mapId}:${side}:all` }],
@@ -270,7 +272,7 @@ const handleAdminCallback = async (userId: number, chatId: number, data: string)
     return
   }
   if (data.startsWith('admin:filtergrenade:')) {
-    const [, , , mapId, side, grenadeType] = data.split(':')
+    const [, , mapId, side, grenadeType] = data.split(':')
     await clearSession(userId)
     await showList(chatId, 0, undefined, { mapId, side, grenadeType })
     return
