@@ -181,7 +181,8 @@ const createLineupWithVideo = async (chatId: number, userId: number, state: Admi
       [id, state.mapId, state.side, state.grenadeType, target, title, description || null]
     )
     inserted = true
-    const caption = `${id}\n${title}${description ? `\n\n${description}` : ''}`
+    const mapName = state.mapId.toUpperCase()
+    const caption = `${mapName} ${state.side} ${title}${description ? `\n${description}` : ''}`
     const post = await sendVideoToChannel(videoFileId, caption)
     const postedVideo = post.video
     await client.query(
@@ -471,11 +472,11 @@ const handleAdminMessage = async (message: NonNullable<TelegramUpdate['message']
     if (!message.video) { await send(chatId, 'Пришли новое видео сообщением или напиши /cancel.'); return }
     const old = await pool.query('SELECT telegram_message_id FROM lineups WHERE id = $1', [state.lineupId])
     if (!old.rows.length) { await clearSession(userId); await send(chatId, 'Раскидка не найдена.'); return }
-    const lineup = await pool.query('SELECT title, description FROM lineups WHERE id = $1', [state.lineupId])
+    const lineup = await pool.query('SELECT map_id, side, title, description FROM lineups WHERE id = $1', [state.lineupId])
     const row = lineup.rows[0]
     let post: Awaited<ReturnType<typeof sendVideoToChannel>>
     try {
-      post = await sendVideoToChannel(message.video.file_id, `${state.lineupId}\n${row.title}${row.description ? `\n\n${row.description}` : ''}`)
+      post = await sendVideoToChannel(message.video.file_id, `${row.map_id.toUpperCase()} ${row.side} ${row.title}${row.description ? `\n${row.description}` : ''}`)
     } catch (error) {
       console.error('Failed to publish replacement video:', error)
       await send(chatId, '❌ Не удалось опубликовать новое видео. Старое видео и запись не изменены. Проверь права бота и повтори попытку.')
