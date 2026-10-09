@@ -25,6 +25,11 @@ const LineupDetails: React.FC<LineupDetailsProps> = ({ lineup, onBack }) => (
     <div className="video-player-container">
       <h2>Video</h2>
       <VideoPlayer lineupId={lineup.id} />
+      {lineup.thumbnail_url && (
+        <div className="lineup-detail-thumbnail">
+          <img src={lineup.thumbnail_url} alt={`Preview: ${lineup.title}`} loading="lazy" />
+        </div>
+      )}
     </div>
   </div>
 )
