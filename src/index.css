@@ -613,3 +613,21 @@ body {
   max-height: 72vh;
   background: #000;
 }
+
+
+/* Optional lineup preview shown on the video details page */
+.lineup-detail-thumbnail {
+  margin-top: 14px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  background: var(--surface-color);
+}
+
+.lineup-detail-thumbnail img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 55vh;
+  object-fit: contain;
+}
