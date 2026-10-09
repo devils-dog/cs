@@ -562,7 +562,19 @@ router.post('/webhook', async (req, res) => {
     if (update.callback_query) {
       const callback = update.callback_query
       const userId = callback.from.id
-      await answerCallbackQuery(callback.id)
+
+      // A callback acknowledgement is best-effort: expired/invalid callback
+      // query IDs must not prevent the actual admin action from being handled.
+      try {
+        await answerCallbackQuery(callback.id)
+      } catch (error: any) {
+        const description = error?.response?.data?.description || error?.message || 'Unknown Telegram API error'
+        console.warn('Telegram answerCallbackQuery failed:', {
+          status: error?.response?.status,
+          description
+        })
+      }
+
       if (!isTelegramAdmin(userId)) return res.status(200).json({ ok: true, ignored: true })
       if (callback.message?.chat.type !== 'private' || !callback.data?.startsWith('admin:') && !callback.data?.startsWith('create_')) {
         return res.status(200).json({ ok: true, ignored: true })
@@ -597,8 +609,14 @@ router.post('/webhook', async (req, res) => {
       return res.status(200).json({ ok: true, linked: false })
     }
     return res.status(200).json({ ok: true, linked: true, lineup_id: lineupId })
-  } catch (error) {
-    console.error('Error processing Telegram webhook:', error)
+  } catch (error: any) {
+    // Keep webhook logs actionable; Axios errors otherwise dump the entire
+    // request/socket object and obscure Telegram's actual error description.
+    console.error('Error processing Telegram webhook:', {
+      status: error?.response?.status,
+      telegramDescription: error?.response?.data?.description,
+      message: error?.message || String(error)
+    })
     return res.status(500).json(errorResponse('TELEGRAM_WEBHOOK_ERROR', 'Failed to process Telegram update'))
   }
 })
