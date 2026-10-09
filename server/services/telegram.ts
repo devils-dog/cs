@@ -62,12 +62,13 @@ const getToken = (): string => {
 
 const callTelegram = async <T>(
   method: string,
-  payload: Record<string, unknown> = {}
+  payload: Record<string, unknown> = {},
+  timeout = 20000
 ): Promise<T> => {
   const response = await axios.post<TelegramResponse<T>>(
     `${API}/bot${getToken()}/${method}`,
     payload,
-    { timeout: 20000 }
+    { timeout }
   )
   if (!response.data.ok) throw new Error(response.data.description || `Telegram API ${method} failed`)
   return response.data.result
@@ -111,7 +112,7 @@ export const answerCallbackQuery = (callbackQueryId: string, text?: string): Pro
   callTelegram<boolean>('answerCallbackQuery', {
     callback_query_id: callbackQueryId,
     ...(text ? { text, show_alert: false } : {})
-  })
+  }, 3000)
 
 export const sendVideoToChannel = (
   videoFileId: string,
