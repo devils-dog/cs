@@ -10,6 +10,7 @@ COPY server/db/migrations/001_initial.sql /app/dist/db/migrations/001_initial.sq
 COPY server/db/migrations/002_telegram_video.sql /app/dist/db/migrations/002_telegram_video.sql
 COPY server/db/migrations/003_map_selection.sql /app/dist/db/migrations/003_map_selection.sql
 COPY server/db/migrations/004_remove_unsupported_maps.sql /app/dist/db/migrations/004_remove_unsupported_maps.sql
+COPY server/db/migrations/005_telegram_admin_sessions.sql /app/dist/db/migrations/005_telegram_admin_sessions.sql
 COPY server/db/seeds/001_maps.sql /app/dist/db/seeds/001_maps.sql
 COPY server/db/seeds/002_lineups.sql /app/dist/db/seeds/002_lineups.sql
 EXPOSE 3000
