@@ -106,6 +106,8 @@ const showLineup = async (chatId: number, lineupId: string): Promise<void> => {
     [
       [{ text: '✏️ Название', callback_data: `admin:edit:title:${l.id}` }, { text: '🎯 Цель', callback_data: `admin:edit:target:${l.id}` }],
       [{ text: '📝 Описание', callback_data: `admin:edit:description:${l.id}` }],
+      [{ text: '🗺 Карта', callback_data: `admin:editmap:${l.id}` }, { text: '🛡 Сторона', callback_data: `admin:editside:${l.id}` }],
+      [{ text: '💣 Тип гранаты', callback_data: `admin:editgrenade:${l.id}` }],
       [{ text: '🎞 Заменить видео', callback_data: `admin:replace:${l.id}` }],
       [{ text: '🗑 Удалить', callback_data: `admin:delete:${l.id}` }],
       [{ text: '⬅ Каталог', callback_data: 'admin:list:0' }, { text: '🏠 Меню', callback_data: 'admin:home' }]
@@ -298,6 +300,53 @@ const handleAdminCallback = async (userId: number, chatId: number, data: string)
     return
   }
   if (data.startsWith('admin:open:')) { await clearSession(userId); await showLineup(chatId, data.slice('admin:open:'.length)); return }
+  if (data.startsWith('admin:editmap:')) {
+    const lineupId = data.slice('admin:editmap:'.length)
+    const keyboard = mapKeyboard(`admin:setmap:${lineupId}`)
+    keyboard.push([{ text: '✖ Отмена', callback_data: `admin:open:${lineupId}` }])
+    await send(chatId, 'Выбери новую карту:', keyboard)
+    return
+  }
+  if (data.startsWith('admin:setmap:')) {
+    const [, , lineupId, mapId] = data.split(':')
+    if (!lineupId || !MAPS.some(([id]) => id === mapId)) return
+    await pool.query('UPDATE lineups SET map_id = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', [mapId, lineupId])
+    await send(chatId, '✅ Карта обновлена.')
+    await showLineup(chatId, lineupId)
+    return
+  }
+  if (data.startsWith('admin:editside:')) {
+    const lineupId = data.slice('admin:editside:'.length)
+    await send(chatId, 'Выбери новую сторону:', [
+      [{ text: 'Атака (T)', callback_data: `admin:setside:${lineupId}:T` }, { text: 'Защита (CT)', callback_data: `admin:setside:${lineupId}:CT` }],
+      [{ text: '✖ Отмена', callback_data: `admin:open:${lineupId}` }]
+    ])
+    return
+  }
+  if (data.startsWith('admin:setside:')) {
+    const [, , lineupId, side] = data.split(':')
+    if (!lineupId || (side !== 'T' && side !== 'CT')) return
+    await pool.query('UPDATE lineups SET side = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', [side, lineupId])
+    await send(chatId, '✅ Сторона обновлена.')
+    await showLineup(chatId, lineupId)
+    return
+  }
+  if (data.startsWith('admin:editgrenade:')) {
+    const lineupId = data.slice('admin:editgrenade:'.length)
+    await send(chatId, 'Выбери новый тип гранаты:', [
+      GRENADES.map(([id, name]) => ({ text: name, callback_data: `admin:setgrenade:${lineupId}:${id}` })),
+      [{ text: '✖ Отмена', callback_data: `admin:open:${lineupId}` }]
+    ])
+    return
+  }
+  if (data.startsWith('admin:setgrenade:')) {
+    const [, , lineupId, grenadeType] = data.split(':')
+    if (!lineupId || !GRENADES.some(([id]) => id === grenadeType)) return
+    await pool.query('UPDATE lineups SET grenade_type = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', [grenadeType, lineupId])
+    await send(chatId, '✅ Тип гранаты обновлён.')
+    await showLineup(chatId, lineupId)
+    return
+  }
   if (data.startsWith('admin:edit:')) {
     const [, , field, lineupId] = data.split(':')
     if (!['target', 'title', 'description'].includes(field) || !lineupId) return
