@@ -6,28 +6,55 @@ interface LineupCardProps {
   onSelect: (lineup: LineupResponse) => void
 }
 
+const grenadeLabels: Record<LineupResponse['grenade_type'], string> = {
+  smoke: 'Smoke',
+  flash: 'Flash',
+  molotov: 'Molotov',
+  he: 'HE grenade'
+}
+
 const LineupCard: React.FC<LineupCardProps> = ({ lineup, onSelect }) => {
+  const open = () => onSelect(lineup)
+
   return (
-    <div 
+    <article
       className="lineup-card"
-      onClick={() => onSelect(lineup)}
+      role="button"
+      tabIndex={0}
+      onClick={open}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          open()
+        }
+      }}
+      aria-label={`Play ${lineup.title}`}
     >
       <div className="lineup-thumbnail">
         {lineup.thumbnail_url ? (
-          <img src={lineup.thumbnail_url} alt={lineup.title} />
+          <img src={lineup.thumbnail_url} alt={`Preview: ${lineup.title}`} loading="lazy" />
         ) : (
-          <div className="no-thumbnail">No thumbnail</div>
+          <div className="thumbnail-placeholder" aria-hidden="true">
+            <span className="placeholder-map">{lineup.map_id.replace(/^de_/, '').toUpperCase()}</span>
+            <span className="play-icon" />
+            <span className="placeholder-caption">VIDEO PREVIEW</span>
+          </div>
         )}
+        <span className="thumbnail-side">{lineup.side}</span>
       </div>
-      <div className="lineup-details">
+      <div className="lineup-card-content">
+        <div className="lineup-card-eyebrow">
+          <span className={`side-badge side-${lineup.side.toLowerCase()}`}>{lineup.side}</span>
+          <span className="grenade-badge">{grenadeLabels[lineup.grenade_type] || lineup.grenade_type}</span>
+        </div>
         <h3 className="lineup-title">{lineup.title}</h3>
-        <div className="lineup-info">
-          <span className="side-badge">{lineup.side}</span>
-          <span className="grenade-badge">{lineup.grenade_type}</span>
-          <span className="target-badge">{lineup.target}</span>
+        {lineup.target && <p className="lineup-target"><span aria-hidden="true">⌖</span> {lineup.target}</p>}
+        <div className="lineup-card-action">
+          <span>Watch lineup</span>
+          <span className="action-arrow" aria-hidden="true">↗</span>
         </div>
       </div>
-    </div>
+    </article>
   )
 }
 
