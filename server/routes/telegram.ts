@@ -112,13 +112,19 @@ const showLineup = async (chatId: number, lineupId: string): Promise<void> => {
     ])
 }
 
-const showList = async (chatId: number, offset: number, search?: string): Promise<void> => {
+type ListFilters = { mapId?: string; side?: string; grenadeType?: string }
+
+const showList = async (chatId: number, offset: number, search?: string, filters: ListFilters = {}): Promise<void> => {
+  const conditions: string[] = []
   const params: unknown[] = []
-  let where = ''
   if (search) {
     params.push(`%${search}%`)
-    where = `WHERE l.title ILIKE $1 OR l.id ILIKE $1 OR l.target ILIKE $1 OR l.description ILIKE $1`
+    conditions.push(`(l.title ILIKE $1 OR l.id ILIKE $1 OR l.target ILIKE $1 OR l.description ILIKE $1)`)
   }
+  if (filters.mapId && filters.mapId !== 'all') { params.push(filters.mapId); conditions.push(`l.map_id = ${params.length}`) }
+  if (filters.side && filters.side !== 'all') { params.push(filters.side); conditions.push(`l.side = ${params.length}`) }
+  if (filters.grenadeType && filters.grenadeType !== 'all') { params.push(filters.grenadeType); conditions.push(`l.grenade_type = ${params.length}`) }
+  const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
   const count = await pool.query(`SELECT COUNT(*)::int AS total FROM lineups l ${where}`, params)
   const total = count.rows[0].total as number
   const limit = 5
@@ -130,20 +136,26 @@ const showList = async (chatId: number, offset: number, search?: string): Promis
     params
   )
   if (!rows.rows.length) {
-    await send(chatId, search ? `По запросу «${escapeHtml(search)}» ничего не найдено.` : 'Каталог пока пуст.',
-      [[{ text: '➕ Добавить раскидку', callback_data: 'admin:add' }], [{ text: '🏠 Меню', callback_data: 'admin:home' }]])
+    const message = search ? `По запросу «${escapeHtml(search)}» ничего не найдено.` : 'По выбранным фильтрам раскидок нет.'
+    await send(chatId, message, [
+      [{ text: '🔎 Изменить фильтры', callback_data: 'admin:filters' }],
+      [{ text: '➕ Добавить раскидку', callback_data: 'admin:add' }, { text: '🏠 Меню', callback_data: 'admin:home' }]
+    ])
     return
   }
   const keyboard: Array<Array<Record<string, unknown>>> = rows.rows.map((l: any) => [{
     text: `${l.telegram_file_id ? '🎬' : '⚠️'} ${l.map_name} · ${l.side} · ${l.title}`.slice(0, 60),
     callback_data: `admin:open:${l.id}`
   }])
+  const filterSuffix = `:${filters.mapId || 'all'}:${filters.side || 'all'}:${filters.grenadeType || 'all'}`
   const nav: Array<Record<string, unknown>> = []
-  if (pageOffset > 0) nav.push({ text: '⬅ Назад', callback_data: `admin:list:${Math.max(0, pageOffset - limit)}` })
-  if (pageOffset + limit < total) nav.push({ text: 'Далее ➡', callback_data: `admin:list:${pageOffset + limit}` })
+  if (pageOffset > 0) nav.push({ text: '⬅ Назад', callback_data: `admin:list:${Math.max(0, pageOffset - limit)}${filterSuffix}` })
+  if (pageOffset + limit < total) nav.push({ text: 'Далее ➡', callback_data: `admin:list:${pageOffset + limit}${filterSuffix}` })
   if (nav.length) keyboard.push(nav)
-  keyboard.push([{ text: '🔎 Поиск', callback_data: 'admin:search' }, { text: '🏠 Меню', callback_data: 'admin:home' }])
-  await send(chatId, `📚 Каталог: ${total} раскидок\nПоказаны ${pageOffset + 1}–${Math.min(pageOffset + limit, total)}. Нажми на раскидку для управления.`, keyboard)
+  keyboard.push([{ text: '🔎 Поиск', callback_data: 'admin:search' }, { text: '⚙️ Фильтры', callback_data: 'admin:filters' }])
+  keyboard.push([{ text: '🏠 Меню', callback_data: 'admin:home' }])
+  const active = [filters.mapId && filters.mapId !== 'all' ? MAPS.find(([id]) => id === filters.mapId)?.[1] : '', filters.side && filters.side !== 'all' ? filters.side : '', filters.grenadeType && filters.grenadeType !== 'all' ? filters.grenadeType : ''].filter(Boolean).join(' · ')
+  await send(chatId, `📚 Каталог: ${total} раскидок${active ? `\nФильтр: ${active}` : ''}\nПоказаны ${pageOffset + 1}–${Math.min(pageOffset + limit, total)}. Нажми на раскидку для управления.`, keyboard)
 }
 
 const createLineupWithVideo = async (chatId: number, userId: number, state: AdminSession, videoFileId: string, mimeType?: string, fileSize?: number): Promise<void> => {
@@ -233,10 +245,43 @@ const handleAdminCallback = async (userId: number, chatId: number, data: string)
     await send(chatId, 'Напиши часть названия, ID, цели или описания для поиска.', [[{ text: '✖ Отмена', callback_data: 'admin:cancel' }]])
     return
   }
+  if (data === 'admin:filters') {
+    await send(chatId, 'Фильтр каталога — выбери карту:', mapKeyboard('admin:filtermap').map((row, index, all) => row))
+    return
+  }
+  if (data.startsWith('admin:filtermap:')) {
+    const mapId = data.slice('admin:filtermap:'.length)
+    if (mapId !== 'all' && !MAPS.some(([id]) => id === mapId)) return
+    await send(chatId, 'Теперь выбери сторону:', [
+      [{ text: 'Все стороны', callback_data: `admin:filterside:${mapId}:all` }],
+      [{ text: 'Атака (T)', callback_data: `admin:filterside:${mapId}:T` }, { text: 'Защита (CT)', callback_data: `admin:filterside:${mapId}:CT` }],
+      [{ text: '✖ Отмена', callback_data: 'admin:cancel' }]
+    ])
+    return
+  }
+  if (data.startsWith('admin:filterside:')) {
+    const [, , , mapId, side] = data.split(':')
+    if (!mapId || !side) return
+    await send(chatId, 'Теперь выбери тип гранаты:', [
+      [{ text: 'Все типы', callback_data: `admin:filtergrenade:${mapId}:${side}:all` }],
+      GRENADES.map(([id, name]) => ({ text: name, callback_data: `admin:filtergrenade:${mapId}:${side}:${id}` })),
+      [{ text: '✖ Отмена', callback_data: 'admin:cancel' }]
+    ])
+    return
+  }
+  if (data.startsWith('admin:filtergrenade:')) {
+    const [, , , mapId, side, grenadeType] = data.split(':')
+    await clearSession(userId)
+    await showList(chatId, 0, undefined, { mapId, side, grenadeType })
+    return
+  }
   if (data === 'admin:list:0' || data.startsWith('admin:list:')) {
     await clearSession(userId)
-    const offset = Number(data.split(':')[2] || 0)
-    await showList(chatId, Number.isFinite(offset) ? offset : 0)
+    const parts = data.split(':')
+    const offset = Number(parts[2] || 0)
+    await showList(chatId, Number.isFinite(offset) ? offset : 0, undefined, {
+      mapId: parts[3] || 'all', side: parts[4] || 'all', grenadeType: parts[5] || 'all'
+    })
     return
   }
   if (data === 'admin:stats') {
