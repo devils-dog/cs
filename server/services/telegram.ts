@@ -102,6 +102,7 @@ export const sendTelegramMessage = (
 ): Promise<TelegramMessage> => callTelegram<TelegramMessage>('sendMessage', {
   chat_id: chatId,
   text,
+  parse_mode: 'HTML',
   ...(inlineKeyboard ? { reply_markup: { inline_keyboard: inlineKeyboard } } : {})
 })
 
