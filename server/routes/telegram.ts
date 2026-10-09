@@ -102,7 +102,7 @@ const showLineup = async (chatId: number, lineupId: string): Promise<void> => {
   const l = result.rows[0]
   const grenadeName = GRENADES.find(([id]) => id === l.grenade_type)?.[1] || l.grenade_type
   await send(chatId,
-    `🎯 <b>${escapeHtml(l.title)}</b>\nID: <code>${escapeHtml(l.id)}</code>\nКарта: ${escapeHtml(l.map_name)}\nСторона: ${l.side}\nТип: ${escapeHtml(grenadeName)}\nЦель: ${escapeHtml(l.target)}\nВидео: ${l.telegram_file_id ? 'привязано' : 'нет'}\n\nОписание: ${escapeHtml(l.description || '—')}`,
+    `🎯 <b>${escapeHtml(l.title)}</b>\nID: <code>${escapeHtml(l.id)}</code>\nКарта: ${escapeHtml(l.map_name)}\nСторона: ${l.side}\nТип: ${escapeHtml(grenadeName)}\nЦель: ${escapeHtml(l.target)}\nВидео: ${l.telegram_file_id ? 'привязано' : 'нет'}\nПревью: ${l.telegram_thumbnail_file_id ? 'загружено' : 'нет'}\n\nОписание: ${escapeHtml(l.description || '—')}`,
     [
       [{ text: '✏️ Название', callback_data: `admin:edit:title:${l.id}` }, { text: '🎯 Цель', callback_data: `admin:edit:target:${l.id}` }],
       [{ text: '📝 Описание', callback_data: `admin:edit:description:${l.id}` }],
