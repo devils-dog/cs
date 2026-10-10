@@ -16,3 +16,6 @@ Thumbs.db
 .idea/
 
 %USERPROFILE%/
+
+# PostgreSQL data directory (local bind mount)
+/data/
